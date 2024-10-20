@@ -50,6 +50,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
   const windowRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { camera, size } = useThree()
+  const [initialSize, setInitialSize] = useState({ width: 0, height: 0 })
 
   const handleTitleBarMouseDown = useCallback((event: React.MouseEvent) => {
     event.stopPropagation()
@@ -98,18 +99,28 @@ const TextWindow: React.FC<TextWindowProps> = ({
     event.stopPropagation()
     setIsResizing(true)
     setResizeStart({ x: event.clientX, y: event.clientY })
+    setInitialSize({ width: width, height: height })
     console.log('Resize started')
-  }, [])
+  }, [width, height])
 
   const handleResizeMouseMove = useCallback((event: MouseEvent) => {
     if (isResizing) {
       event.preventDefault()
-      const newWidth = Math.max((event.clientX / scale) - position[0], 200)
-      const newHeight = Math.max((event.clientY / scale) - position[1], 150)
-      onResize(newWidth, newHeight)
-      console.log('Resizing', newWidth, newHeight)
+      const deltaX = (event.clientX - resizeStart.x) / scale
+      const deltaY = (event.clientY - resizeStart.y) / scale
+      
+      
+      const newWidth = Math.max(initialSize.width + deltaX, 200)
+      const newHeight = Math.max(initialSize.height + deltaY, 150)
+
+      const maxChange = 100 / scale
+      const clampedWidth = Math.min(newWidth, initialSize.width + maxChange)
+      const clampedHeight = Math.min(newHeight, initialSize.height + maxChange)
+
+      onResize(clampedWidth, clampedHeight)
+      console.log('Resizing', clampedWidth, clampedHeight)
     }
-  }, [isResizing, scale, position, onResize])
+  }, [isResizing, scale, resizeStart, initialSize, onResize])
 
   const handleResizeMouseUp = useCallback(() => {
     setIsResizing(false)
