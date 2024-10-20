@@ -18,6 +18,9 @@ interface TextWindowProps {
   onPositionChange: (x: number, y: number) => void
   scale: number
   creationTime: Date
+  onResize: (width: number, height: number) => void
+  width: number
+  height: number
 }
 
 const TextWindow: React.FC<TextWindowProps> = ({
@@ -34,12 +37,18 @@ const TextWindow: React.FC<TextWindowProps> = ({
   onPositionChange,
   scale,
   creationTime,
+  onResize,
+  width,
+  height,
 }) => {
   const [text, setText] = useState(initialText)
   const [title, setTitle] = useState(initialTitle)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [isResizing, setIsResizing] = useState(false)
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 })
   const windowRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { camera, size } = useThree()
 
   const handleTitleBarMouseDown = useCallback((event: React.MouseEvent) => {
@@ -85,6 +94,39 @@ const TextWindow: React.FC<TextWindowProps> = ({
 
   const formattedCreationTime = format(creationTime, 'MMM d, yyyy HH:mm:ss')
 
+  const handleResizeMouseDown = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation()
+    setIsResizing(true)
+    setResizeStart({ x: event.clientX, y: event.clientY })
+    console.log('Resize started')
+  }, [])
+
+  const handleResizeMouseMove = useCallback((event: MouseEvent) => {
+    if (isResizing) {
+      event.preventDefault()
+      const newWidth = Math.max((event.clientX / scale) - position[0], 200)
+      const newHeight = Math.max((event.clientY / scale) - position[1], 150)
+      onResize(newWidth, newHeight)
+      console.log('Resizing', newWidth, newHeight)
+    }
+  }, [isResizing, scale, position, onResize])
+
+  const handleResizeMouseUp = useCallback(() => {
+    setIsResizing(false)
+    console.log('Resize ended')
+  }, [])
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleResizeMouseMove)
+      window.addEventListener('mouseup', handleResizeMouseUp)
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleResizeMouseMove)
+      window.removeEventListener('mouseup', handleResizeMouseUp)
+    }
+  }, [isResizing, handleResizeMouseMove, handleResizeMouseUp])
+
   return (
     <group position={position}>
       <Html
@@ -92,8 +134,8 @@ const TextWindow: React.FC<TextWindowProps> = ({
         scale={scale}
         zIndexRange={[zIndex + 2, zIndex + 2]}
         style={{
-          width: '400px',
-          height: '320px', // Increased height to accommodate status bar
+          width: `${width}px`,
+          height: `${height}px`,
         }}
       >
         <div 
@@ -108,6 +150,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
             zIndex: zIndex + 2,
             display: 'flex',
             flexDirection: 'column',
+            position: 'relative',
           }}
         >
           <div 
@@ -131,6 +174,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
           </div>
           <div className="window-body" style={{ flex: 1, padding: '10px', overflow: 'hidden' }}>
             <textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => {
                 setText(e.target.value)
@@ -148,6 +192,19 @@ const TextWindow: React.FC<TextWindowProps> = ({
           <div className="status-bar">
             <p className="status-bar-field">Created: {formattedCreationTime}</p>
           </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: '20px',
+              height: '20px',
+              cursor: 'se-resize',
+              background: 'linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.4) 50%)',
+              zIndex: 1000, // Ensure it's on top
+            }}
+            onMouseDown={handleResizeMouseDown}
+          />
         </div>
       </Html>
     </group>

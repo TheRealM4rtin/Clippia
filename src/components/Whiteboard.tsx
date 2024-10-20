@@ -13,6 +13,8 @@ interface Window {
   y: number
   zIndex: number
   creationTime: Date;
+  width: number
+  height: number
 }
 
 function Scene({ 
@@ -21,6 +23,7 @@ function Scene({
   removeWindow, 
   updateWindowText,
   updateWindowTitle, 
+  updateWindowSize,
   cameraPosition,
   cameraZoom
 }) {
@@ -52,14 +55,18 @@ function Scene({
           onTitleChange={(title) => updateWindowTitle(window.id, title)}
           onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
           scale={1 / cameraZoom}
+          cameraZoom={cameraZoom}
           creationTime={window.creationTime}
+          onResize={(width, height) => updateWindowSize(window.id, width, height)}
+          width={window.width}
+          height={window.height}
         />
       ))}
     </>
   )
 }
 
-const Whiteboard = () => {
+const Whiteboard: React.FC = () => {
   const [windows, setWindows] = useState<Window[]>([])
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 })
   const [cameraZoom, setCameraZoom] = useState(1)
@@ -142,7 +149,9 @@ const Whiteboard = () => {
       x: newX,
       y: newY,
       zIndex: windows.length,
-      creationTime: new Date()
+      creationTime: new Date(),
+      width: 400, // Default width
+      height: 320, // Default height
     }
     setWindows(prevWindows => [...prevWindows, newWindow])
   }, [windows, cameraPosition])
@@ -167,6 +176,15 @@ const Whiteboard = () => {
     setWindows(prevWindows => prevWindows.map(window => 
       window.id === id ? { ...window, x: newX, y: newY } : window
     ))
+  }, [])
+
+  const updateWindowSize = useCallback((id: number, width: number, height: number) => {
+    console.log('Updating window size', id, width, height);
+    setWindows(prevWindows =>
+      prevWindows.map(window =>
+        window.id === id ? { ...window, width, height } : window
+      )
+    );
   }, [])
 
   const resetView = useCallback(() => {
@@ -196,6 +214,7 @@ const Whiteboard = () => {
           removeWindow={removeWindow}
           updateWindowText={updateWindowText}
           updateWindowTitle={updateWindowTitle}
+          updateWindowSize={updateWindowSize}
           cameraPosition={cameraPosition}
           cameraZoom={cameraZoom}
         />
