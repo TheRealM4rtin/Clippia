@@ -48,6 +48,7 @@ function Scene({
           onTitleChange={(title) => updateWindowTitle(window.id, title)}
           onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
           scale={1 / cameraZoom}
+          cameraZoom={cameraZoom}
         />
       ))}
     </>
@@ -62,11 +63,14 @@ const Whiteboard = () => {
   const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 })
   const canvasRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
+  const [cursorStyle, setCursorStyle] = useState('default')
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
-    if (event.target === overlayRef.current) {
+    const target = event.target as HTMLElement;
+    if (target === overlayRef.current || !target.closest('.window')) {
       setIsPanning(true)
       setLastMousePosition({ x: event.clientX, y: event.clientY })
+      setCursorStyle('move')
     }
   }, [])
 
@@ -83,10 +87,15 @@ const Whiteboard = () => {
   }, [isPanning, lastMousePosition, cameraZoom])
 
   const handleMouseUp = useCallback(() => {
-    if (isPanning) {
-      setIsPanning(false)
-    }
-  }, [isPanning])
+    setIsPanning(false)
+    setCursorStyle('default')
+  }, [])
+
+  const handleOverlayMouseDown = useCallback((event: React.MouseEvent) => {
+    // Prevent event from propagating to TextWindow components
+    event.stopPropagation()
+    handleMouseDown(event)
+  }, [handleMouseDown])
 
   const handleWheel = useCallback((event: WheelEvent) => {
     event.preventDefault()
@@ -164,6 +173,11 @@ const Whiteboard = () => {
     <div 
       ref={canvasRef}
       className="relative w-screen h-screen overflow-hidden"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      style={{ cursor: cursorStyle }}
     >
       <Canvas
         orthographic
@@ -183,17 +197,11 @@ const Whiteboard = () => {
       </Canvas>
       <div 
         ref={overlayRef}
-        className="absolute inset-0"
+        className="absolute inset-0 pointer-events-none"
         style={{ 
-          cursor: isPanning ? 'move' : 'default',
           touchAction: 'none',
-          pointerEvents: 'auto',
           zIndex: 1
         }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
       />
       <DebugPanel
         windowCount={windows.length}
