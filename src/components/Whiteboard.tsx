@@ -3,7 +3,6 @@ import { Canvas, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import TextWindow from './TextWindow'
 import DebugPanel from './DebugPanel'
-import { format } from 'date-fns';
 
 interface Window {
   id: number
@@ -128,19 +127,40 @@ const Whiteboard: React.FC = () => {
   }, [handleWheel])
 
   const addWindow = useCallback(() => {
-    const offset = 5 // Offset for new window position
-    let newX, newY
+    const defaultWidth = 400
+    const defaultHeight = 320
+    const offset = 2 / (cameraZoom * 50) // Convert 5 units to world space
+
+    let newX: number, newY: number
 
     if (windows.length > 0) {
-      // Get the position of the last window
       const lastWindow = windows[windows.length - 1]
-      newX = lastWindow.x + offset
-      newY = lastWindow.y + offset
+      
+      // Check if the last window is within the current view
+      const viewLeft = cameraPosition.x - (defaultWidth / 2) / (cameraZoom * 50)
+      const viewRight = cameraPosition.x + (defaultWidth / 2) / (cameraZoom * 50)
+      const viewTop = cameraPosition.y + (defaultHeight / 2) / (cameraZoom * 50)
+      const viewBottom = cameraPosition.y - (defaultHeight / 2) / (cameraZoom * 50)
+
+      if (lastWindow.x >= viewLeft && lastWindow.x <= viewRight &&
+          lastWindow.y >= viewBottom && lastWindow.y <= viewTop) {
+        // Position new window relative to the last one
+        newX = lastWindow.x + offset
+        newY = lastWindow.y - offset
+      } else {
+        // Center the window in the current view
+        newX = cameraPosition.x
+        newY = cameraPosition.y
+      }
     } else {
-      // If it's the first window, create it at the center of the view
-      newX = -cameraPosition.x
-      newY = -cameraPosition.y
+      // If it's the first window, center it in the view
+      newX = cameraPosition.x
+      newY = cameraPosition.y
     }
+
+    // Adjust for the window size
+    newX -= (defaultWidth / 4) / (cameraZoom * 50)
+    newY += (defaultHeight / 4) / (cameraZoom * 50)
 
     const newWindow = { 
       id: Date.now(), 
@@ -150,12 +170,11 @@ const Whiteboard: React.FC = () => {
       y: newY,
       zIndex: windows.length,
       creationTime: new Date(),
-      width: 400, // Default width
-      height: 320, // Default height
+      width: defaultWidth,
+      height: defaultHeight,
     }
     setWindows(prevWindows => [...prevWindows, newWindow])
-  }, [windows, cameraPosition])
-
+  }, [cameraPosition, cameraZoom, windows])
   const removeWindow = useCallback((id: number) => {
     setWindows(prevWindows => prevWindows.filter(window => window.id !== id))
   }, [])
