@@ -46,11 +46,12 @@ function Scene({
           initialText={window.text}
           zIndex={window.zIndex}
           onClose={() => removeWindow(window.id)}
+          onMinimize={() => {}}
+          onMaximize={() => {}}
           onTextChange={(text) => updateWindowText(window.id, text)}
           onTitleChange={(title) => updateWindowTitle(window.id, title)}
           onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
           scale={1 / cameraZoom}
-          cameraZoom={cameraZoom}
           creationTime={window.creationTime}
         />
       ))}

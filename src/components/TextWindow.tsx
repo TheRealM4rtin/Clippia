@@ -11,6 +11,8 @@ interface TextWindowProps {
   position: [number, number, number]
   zIndex: number
   onClose: () => void
+  onMinimize: () => void
+  onMaximize: () => void
   onTextChange: (text: string) => void
   onTitleChange: (title: string) => void
   onPositionChange: (x: number, y: number) => void
@@ -25,6 +27,8 @@ const TextWindow: React.FC<TextWindowProps> = ({
   position,
   zIndex,
   onClose,
+  onMinimize,
+  onMaximize,
   onTextChange,
   onTitleChange,
   onPositionChange,
@@ -120,6 +124,8 @@ const TextWindow: React.FC<TextWindowProps> = ({
               {title}
             </span>
             <div className="title-bar-controls">
+              <button aria-label="Minimize" onClick={(e) => { e.stopPropagation(); onMinimize(); }}></button>
+              <button aria-label="Maximize" onClick={(e) => { e.stopPropagation(); onMaximize(); }}></button>
               <button aria-label="Close" onClick={(e) => { e.stopPropagation(); onClose(); }}></button>
             </div>
           </div>
