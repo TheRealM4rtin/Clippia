@@ -1,27 +1,47 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+@import '98.css';
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.window {
+  position: absolute;
+  min-width: 200px;
+  min-height: 150px;
+}
+
+.window-body {
+  margin: 0;
+  padding: 8px;
+}
+
+.window-button {
+  font-family: 'MS Sans Serif', Arial, sans-serif;
+  font-size: 11px;
+  color: black;
+  background-color: #c0c0c0;
+  border: 2px solid;
+  border-color: #dfdfdf #404040 #404040 #dfdfdf;
+  padding: 4px 8px;
+  margin: 2px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  box-shadow: 1px 1px 0px 0px #808080;
+}
+
+.window-button:active, .window-button.active {
+  border-color: #404040 #dfdfdf #dfdfdf #404040;
+  box-shadow: inset 1px 1px 0px 0px #808080;
+}
+
+.debug-panel {
+  background-color: #c0c0c0;
+  border: 2px solid;
+  border-color: #dfdfdf #404040 #404040 #dfdfdf;
+  box-shadow: 1px 1px 0px 0px #808080;
 }
