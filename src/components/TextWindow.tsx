@@ -123,7 +123,13 @@ const TextWindow: React.FC<TextWindowProps> = ({
                 setText(e.target.value)
                 onTextChange(e.target.value)
               }}
-              style={{ width: '100%', height: '100%', resize: 'none', border: 'none' }}
+              style={{
+                width: 'calc(100% - 2px)', // Subtract 2px to account for left padding
+                height: 'calc(100% - 2px)', // Subtract 2px to account for top padding
+                resize: 'none',
+                border: 'none',
+                padding: '4px 0 0 4px' // This moves the text 2px down and 2px right
+              }}
             />
           </div>
         </div>
