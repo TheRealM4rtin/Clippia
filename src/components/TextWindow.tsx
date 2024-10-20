@@ -2,6 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react'
 import { Html } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { format } from 'date-fns'
 
 interface TextWindowProps {
   id: number
@@ -14,6 +15,7 @@ interface TextWindowProps {
   onTitleChange: (title: string) => void
   onPositionChange: (x: number, y: number) => void
   scale: number
+  creationTime: Date
 }
 
 const TextWindow: React.FC<TextWindowProps> = ({
@@ -27,6 +29,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
   onTitleChange,
   onPositionChange,
   scale,
+  creationTime,
 }) => {
   const [text, setText] = useState(initialText)
   const [title, setTitle] = useState(initialTitle)
@@ -76,6 +79,8 @@ const TextWindow: React.FC<TextWindowProps> = ({
     onTitleChange(newTitle)
   }, [onTitleChange])
 
+  const formattedCreationTime = format(creationTime, 'MMM d, yyyy HH:mm:ss')
+
   return (
     <group position={position}>
       <Html
@@ -84,7 +89,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
         zIndexRange={[zIndex + 2, zIndex + 2]}
         style={{
           width: '400px',
-          height: '300px',
+          height: '320px', // Increased height to accommodate status bar
         }}
       >
         <div 
@@ -96,7 +101,9 @@ const TextWindow: React.FC<TextWindowProps> = ({
             overflow: 'hidden',
             transform: `scale(${1 / scale})`,
             transformOrigin: 'top left',
-            zIndex: zIndex + 2
+            zIndex: zIndex + 2,
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <div 
@@ -116,7 +123,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
               <button aria-label="Close" onClick={(e) => { e.stopPropagation(); onClose(); }}></button>
             </div>
           </div>
-          <div className="window-body" style={{ height: 'calc(100% - 30px)', padding: '10px' }}>
+          <div className="window-body" style={{ flex: 1, padding: '10px', overflow: 'hidden' }}>
             <textarea
               value={text}
               onChange={(e) => {
@@ -124,13 +131,16 @@ const TextWindow: React.FC<TextWindowProps> = ({
                 onTextChange(e.target.value)
               }}
               style={{
-                width: 'calc(100% - 2px)', // Subtract 2px to account for left padding
-                height: 'calc(100% - 2px)', // Subtract 2px to account for top padding
+                width: '100%',
+                height: '100%',
                 resize: 'none',
                 border: 'none',
-                padding: '4px 0 0 4px' // This moves the text 2px down and 2px right
+                padding: '4px 0 0 4px'
               }}
             />
+          </div>
+          <div className="status-bar">
+            <p className="status-bar-field">Created: {formattedCreationTime}</p>
           </div>
         </div>
       </Html>

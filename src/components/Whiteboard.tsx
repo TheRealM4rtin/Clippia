@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import TextWindow from './TextWindow'
 import DebugPanel from './DebugPanel'
+import { format } from 'date-fns';
 
 interface Window {
   id: number
@@ -11,6 +12,7 @@ interface Window {
   x: number
   y: number
   zIndex: number
+  creationTime: Date;
 }
 
 function Scene({ 
@@ -49,6 +51,7 @@ function Scene({
           onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
           scale={1 / cameraZoom}
           cameraZoom={cameraZoom}
+          creationTime={window.creationTime}
         />
       ))}
     </>
@@ -137,7 +140,8 @@ const Whiteboard = () => {
       text: 'New Window Content', 
       x: newX,
       y: newY,
-      zIndex: windows.length 
+      zIndex: windows.length,
+      creationTime: new Date()
     }
     setWindows(prevWindows => [...prevWindows, newWindow])
   }, [windows, cameraPosition])
