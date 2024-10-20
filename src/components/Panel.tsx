@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-interface DebugPanelProps {
+interface PanelProps {
   windowCount: number
   x: number
   y: number
@@ -9,10 +9,10 @@ interface DebugPanelProps {
   onResetView: () => void
 }
 
-const DebugPanel: React.FC<DebugPanelProps> = ({ 
+const Panel: React.FC<PanelProps> = ({ 
   windowCount, x, y, scale, onAddWindow, onResetView
 }) => {
-  const [activeTab, setActiveTab] = useState('debug');
+  const [activeTab, setActiveTab] = useState('menu');
 
   const tabStyle = (isActive: boolean) => ({
     padding: '1px 7px',
@@ -40,10 +40,16 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
     <div className="fixed top-4 left-4 z-50" style={panelStyle}>
       <div className="flex">
         <div 
-          style={tabStyle(activeTab === 'debug')}
-          onClick={() => setActiveTab('debug')}
+          style={tabStyle(activeTab === 'menu')}
+          onClick={() => setActiveTab('menu')}
         >
-          Debug
+          Menu
+        </div>
+        <div 
+          style={tabStyle(activeTab === 'login')}
+          onClick={() => setActiveTab('login')}
+        >
+          Login
         </div>
         <div 
           style={tabStyle(activeTab === 'about')}
@@ -59,7 +65,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
         fontSize: '11px',
         color: 'black',
       }}>
-        {activeTab === 'debug' && (
+        {activeTab === 'menu' && (
           <>
             <p>Windows: {windowCount}</p>
             <p>Scale: {scale.toFixed(2)}</p>
@@ -96,11 +102,19 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
           </>
         )}
         {activeTab === 'about' && (
-          <p>Debug Panel v1.0</p>
+          <div>
+            <p>Fenestro.io v1.0</p>
+            <ul style={{ textDecoration: 'underline' }}>Roadmap</ul>
+            <div>
+              <li>Amiga music player</li>
+            </div>
+              
+            <p>Made with ❤️ by <a href="https://x.com/mrtincss">Martin</a></p>
+          </div>
         )}
       </div>
     </div>
   )
 }
 
-export default DebugPanel
+export default Panel

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import TextWindow from './TextWindow'
-import DebugPanel from './DebugPanel'
+import Panel from './Panel'
 
 interface Window {
   id: number
@@ -246,7 +246,7 @@ const Whiteboard: React.FC = () => {
           zIndex: 1
         }}
       />
-      <DebugPanel
+      <Panel
         windowCount={windows.length}
         x={cameraPosition.x}
         y={cameraPosition.y}
