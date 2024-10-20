@@ -3,6 +3,12 @@ import { Html } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { format } from 'date-fns'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { Markdown } from 'tiptap-markdown'
+import BulletList from '@tiptap/extension-bullet-list'
+import ListItem from '@tiptap/extension-list-item'
+import '../app/tiptap.css'
 
 interface TextWindowProps {
   id: number
@@ -41,16 +47,36 @@ const TextWindow: React.FC<TextWindowProps> = ({
   width,
   height,
 }) => {
-  const [text, setText] = useState(initialText)
   const [title, setTitle] = useState(initialTitle)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [isResizing, setIsResizing] = useState(false)
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 })
   const windowRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { camera, size } = useThree()
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 })
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: false, // Disable the default bullet list to use our custom one
+      }),
+      Markdown,
+      BulletList,
+      ListItem,
+    ],
+    content: initialText || 'New Window Content',
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML()
+      onTextChange(html)
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm focus:outline-none',
+        style: 'height: 100%; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: white; color: black; padding: 4px;',
+      },
+    },
+  })
 
   const handleTitleBarMouseDown = useCallback((event: React.MouseEvent) => {
     event.stopPropagation()
@@ -100,7 +126,6 @@ const TextWindow: React.FC<TextWindowProps> = ({
     setIsResizing(true)
     setResizeStart({ x: event.clientX, y: event.clientY })
     setInitialSize({ width: width, height: height })
-    console.log('Resize started')
   }, [width, height])
 
   const handleResizeMouseMove = useCallback((event: MouseEvent) => {
@@ -108,7 +133,6 @@ const TextWindow: React.FC<TextWindowProps> = ({
       event.preventDefault()
       const deltaX = (event.clientX - resizeStart.x) / scale
       const deltaY = (event.clientY - resizeStart.y) / scale
-      
       
       const newWidth = Math.max(initialSize.width + deltaX, 200)
       const newHeight = Math.max(initialSize.height + deltaY, 150)
@@ -118,13 +142,11 @@ const TextWindow: React.FC<TextWindowProps> = ({
       const clampedHeight = Math.min(newHeight, initialSize.height + maxChange)
 
       onResize(clampedWidth, clampedHeight)
-      console.log('Resizing', clampedWidth, clampedHeight)
     }
   }, [isResizing, scale, resizeStart, initialSize, onResize])
 
   const handleResizeMouseUp = useCallback(() => {
     setIsResizing(false)
-    console.log('Resize ended')
   }, [])
 
   useEffect(() => {
@@ -183,22 +205,8 @@ const TextWindow: React.FC<TextWindowProps> = ({
               <button aria-label="Close" onClick={(e) => { e.stopPropagation(); onClose(); }}></button>
             </div>
           </div>
-          <div className="window-body" style={{ flex: 1, padding: '10px', overflow: 'hidden' }}>
-            <textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => {
-                setText(e.target.value)
-                onTextChange(e.target.value)
-              }}
-              style={{
-                width: '100%',
-                height: '100%',
-                resize: 'none',
-                border: 'none',
-                padding: '4px 0 0 4px'
-              }}
-            />
+          <div className="window-body" style={{ flex: 1, padding: '5px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <EditorContent editor={editor} style={{ flex: 1, overflow: 'auto' }} />
           </div>
           <div className="status-bar">
             <p className="status-bar-field">Created: {formattedCreationTime}</p>
@@ -212,7 +220,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
               height: '20px',
               cursor: 'se-resize',
               background: 'linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.4) 50%)',
-              zIndex: 1000, // Ensure it's on top
+              zIndex: 1000,
             }}
             onMouseDown={handleResizeMouseDown}
           />

@@ -1,10 +1,13 @@
-@import '98.css';
+@import url('https://unpkg.com/98.css');
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
 body {
   overflow: hidden;
+  font-family: 'MS Sans Serif', Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .window {
@@ -45,3 +48,5 @@ body {
   border-color: #dfdfdf #404040 #404040 #dfdfdf;
   box-shadow: 1px 1px 0px 0px #808080;
 }
+
+/* Add any other global styles you need */
