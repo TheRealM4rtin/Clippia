@@ -26,14 +26,18 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
     position: 'relative' as const,
     top: isActive ? '1px' : '0',
     zIndex: isActive ? 2 : 1,
-    fontFamily: '"MS Sans Serif", Arial, sans-serif',
+    fontFamily: '"Pixelated MS Sans Serif", Arial',
     fontSize: '11px',
     fontWeight: 'normal' as const,
     color: 'black',
   });
 
+  const panelStyle = {
+    fontFamily: '"Pixelated MS Sans Serif", Arial',
+  };
+
   return (
-    <div className="fixed top-4 left-4 z-50">
+    <div className="fixed top-4 left-4 z-50" style={panelStyle}>
       <div className="flex">
         <div 
           style={tabStyle(activeTab === 'debug')}
@@ -52,7 +56,6 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
         backgroundColor: 'white',
         border: '1px solid #0054E3',
         padding: '6px',
-        fontFamily: '"MS Sans Serif", Arial, sans-serif',
         fontSize: '11px',
         color: 'black',
       }}>
@@ -65,7 +68,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
               onClick={onAddWindow}
               className="window-button"
               style={{
-                fontFamily: '"MS Sans Serif", Arial, sans-serif',
+                fontFamily: '"Pixelated MS Sans Serif", Arial',
                 fontSize: '11px',
                 color: 'black',
                 backgroundColor: '#D4D0C8',
@@ -80,7 +83,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
               onClick={onResetView}
               className="window-button"
               style={{
-                fontFamily: '"MS Sans Serif", Arial, sans-serif',
+                fontFamily: '"Pixelated MS Sans Serif", Arial',
                 fontSize: '11px',
                 color: 'black',
                 backgroundColor: '#D4D0C8',
