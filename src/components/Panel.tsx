@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Feedback from './Feedback'
 
 interface PanelProps {
   windowCount: number
@@ -44,6 +45,12 @@ const Panel: React.FC<PanelProps> = ({
           onClick={() => setActiveTab('menu')}
         >
           Menu
+        </div>
+        <div 
+          style={tabStyle(activeTab === 'feedback')}
+          onClick={() => setActiveTab('feedback')}
+        >
+          Feedback
         </div>
         <div 
           style={tabStyle(activeTab === 'login')}
@@ -119,6 +126,9 @@ const Panel: React.FC<PanelProps> = ({
               
             <p>Made with ❤️ by <a href="https://x.com/mrtincss">Martin</a></p>
           </div>
+        )}
+        {activeTab === 'feedback' && (
+          <Feedback />
         )}
       </div>
     </div>

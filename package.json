@@ -12,6 +12,7 @@
     "@react-spring/web": "^9.7.5",
     "@react-three/drei": "^9.114.6",
     "@react-three/fiber": "^8.17.10",
+    "@supabase/supabase-js": "^2.45.6",
     "@tiptap/react": "^2.8.0",
     "@tiptap/starter-kit": "^2.8.0",
     "@use-gesture/react": "^10.3.1",
@@ -26,7 +27,8 @@
     "swapy": "^0.4.2",
     "three": "^0.169.0",
     "tiptap-markdown": "^0.8.10",
-    "use-gesture": "^1.0.0"
+    "use-gesture": "^1.0.0",
+    "xp.css": "^0.2.6"
   },
   "devDependencies": {
     "@types/node": "^20",
