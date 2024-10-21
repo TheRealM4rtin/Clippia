@@ -28,6 +28,7 @@ interface TextWindowProps {
   height: number
   camera: THREE.Camera | undefined
   size: { width: number; height: number } | undefined
+  updateCursorStyle: (style: string) => void
 }
 
 const TextWindow: React.FC<TextWindowProps> = (props) => {
@@ -51,7 +52,11 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
     height,
     camera,
     size,
+    updateCursorStyle,
   } = props
+
+  console.log('TextWindow props:', props);
+  console.log('updateCursorStyle:', updateCursorStyle);
 
   const [title, setTitle] = useState(initialTitle)
   const [isDragging, setIsDragging] = useState(false)
@@ -150,6 +155,32 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
 
   const formattedCreationTime = format(creationTime, 'MMM d, yyyy HH:mm:ss')
 
+  const handleEditorFocus = useCallback(() => {
+    console.log('Editor focus, updateCursorStyle:', updateCursorStyle);
+    if (typeof updateCursorStyle === 'function') {
+      updateCursorStyle('text');
+    } else {
+      console.error('updateCursorStyle is not a function:', updateCursorStyle);
+    }
+  }, [updateCursorStyle]);
+
+  const handleEditorBlur = useCallback(() => {
+    updateCursorStyle('default')
+  }, [updateCursorStyle])
+
+  useEffect(() => {
+    if (editor) {
+      editor.on('focus', handleEditorFocus)
+      editor.on('blur', handleEditorBlur)
+    }
+    return () => {
+      if (editor) {
+        editor.off('focus', handleEditorFocus)
+        editor.off('blur', handleEditorBlur)
+      }
+    }
+  }, [editor, handleEditorFocus, handleEditorBlur])
+
   return (
     <group position={position}>
       <Html
@@ -175,11 +206,13 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
             flexDirection: 'column',
             position: 'relative',
           }}
+          onMouseEnter={() => updateCursorStyle('default')}
         >
           <div 
             className="title-bar" 
             onMouseDown={handleDragStart}
             style={{ cursor: 'move' }}
+            onMouseEnter={() => updateCursorStyle('move')}
           >
             <span
               className="title-bar-text"
@@ -196,7 +229,11 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
             </div>
           </div>
           <div className="window-body" style={{ flex: 1, padding: '5px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <EditorContent editor={editor} style={{ flex: 1, overflow: 'auto' }} />
+            <EditorContent 
+              editor={editor} 
+              style={{ flex: 1, overflow: 'auto' }}
+              onMouseEnter={() => updateCursorStyle('text')}
+            />
           </div>
           <div className="status-bar">
             <p className="status-bar-field">Created: {formattedCreationTime}</p>
@@ -213,6 +250,7 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
               zIndex: 1000,
             }}
             onMouseDown={handleResizeStart}
+            onMouseEnter={() => updateCursorStyle('se-resize')}
           />
         </div>
       </Html>

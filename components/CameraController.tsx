@@ -8,7 +8,7 @@ interface CameraControllerProps {
   setCameraZoom: React.Dispatch<React.SetStateAction<number>>
   isPanning: boolean
   setIsPanning: React.Dispatch<React.SetStateAction<boolean>>
-  setCursorStyle: React.Dispatch<React.SetStateAction<string>>
+  updateCursorStyle: (style: string) => void
 }
 
 const CameraController: React.FC<CameraControllerProps> = ({
@@ -18,7 +18,7 @@ const CameraController: React.FC<CameraControllerProps> = ({
   setCameraZoom,
   isPanning,
   setIsPanning,
-  setCursorStyle,
+  updateCursorStyle,
 }) => {
   const { camera, gl } = useThree()
   const lastMousePosition = useRef({ x: 0, y: 0 })
@@ -28,9 +28,9 @@ const CameraController: React.FC<CameraControllerProps> = ({
     if (target === gl.domElement) {
       setIsPanning(true)
       lastMousePosition.current = { x: event.clientX, y: event.clientY }
-      setCursorStyle('grabbing')
+      updateCursorStyle('grab')
     }
-  }, [gl.domElement, setIsPanning, setCursorStyle])
+  }, [gl.domElement, setIsPanning, updateCursorStyle])
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (isPanning) {
@@ -47,16 +47,16 @@ const CameraController: React.FC<CameraControllerProps> = ({
   const handleMouseUp = useCallback(() => {
     if (isPanning) {
       setIsPanning(false)
-      setCursorStyle('grab')
+      updateCursorStyle('default')
     }
-  }, [isPanning, setIsPanning, setCursorStyle])
+  }, [isPanning, setIsPanning, updateCursorStyle])
 
   const handleMouseLeave = useCallback(() => {
     if (isPanning) {
       setIsPanning(false)
-      setCursorStyle('grab')
+      updateCursorStyle('default')
     }
-  }, [isPanning, setIsPanning, setCursorStyle])
+  }, [isPanning, setIsPanning, updateCursorStyle])
 
   const handleWheel = useCallback((event: WheelEvent) => {
     event.preventDefault()

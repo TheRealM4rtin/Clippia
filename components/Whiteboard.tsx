@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import TextWindow from '@/components/TextWindow'
 import Panel from '@/components/Panel'
 import CameraController from '@/components/CameraController'
+import WindowsContainer from './WindowsContainer'
 
 interface Window {
   id: number
@@ -25,6 +26,7 @@ interface SceneProps {
   updateWindowSize: (id: number, width: number, height: number) => void
   cameraPosition: { x: number; y: number }
   cameraZoom: number
+  updateCursorStyle: (style: string) => void
 }
 
 function Scene({ 
@@ -35,7 +37,8 @@ function Scene({
   updateWindowTitle, 
   updateWindowSize,
   cameraPosition,
-  cameraZoom
+  cameraZoom,
+  updateCursorStyle
 }: SceneProps) {
   const { camera, size } = useThree()
   
@@ -71,6 +74,7 @@ function Scene({
           height={window.height}
           camera={camera}
           size={size} 
+          updateCursorStyle={updateCursorStyle}
         />
       ))}
     </>
@@ -83,7 +87,7 @@ const Whiteboard: React.FC = () => {
   const [cameraZoom, setCameraZoom] = useState(1)
   const [isPanning, setIsPanning] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
-  const [cursorStyle, setCursorStyle] = useState('grab')
+  const [cursorStyle, setCursorStyle] = useState('default')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
 
@@ -179,6 +183,9 @@ const Whiteboard: React.FC = () => {
     setCameraZoom(1)
   }, [])
 
+  const updateCursorStyle = useCallback((style: string) => {
+    setCursorStyle(style);
+  }, []);
 
   return (
     <div className="w-full h-full overflow-hidden" style={{ cursor: cursorStyle }}>
@@ -202,7 +209,7 @@ const Whiteboard: React.FC = () => {
           setCameraZoom={setCameraZoom}
           isPanning={isPanning}
           setIsPanning={setIsPanning}
-          setCursorStyle={setCursorStyle}
+          updateCursorStyle={updateCursorStyle}
         />
         <Scene
           windows={windows}
@@ -213,6 +220,7 @@ const Whiteboard: React.FC = () => {
           updateWindowSize={updateWindowSize}
           cameraPosition={cameraPosition}
           cameraZoom={cameraZoom}
+          updateCursorStyle={updateCursorStyle}
         />
       </Canvas>
       <div className="absolute top-4 left-4 z-10">

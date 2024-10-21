@@ -22,6 +22,7 @@ interface WindowsContainerProps {
   onPositionChange: (id: number, x: number, y: number) => void
   onResize: (id: number, width: number, height: number) => void
   scale: number
+  updateCursorStyle: (style: string) => void
 }
 
 const WindowsContainer = forwardRef<HTMLDivElement, WindowsContainerProps>(
@@ -33,8 +34,11 @@ const WindowsContainer = forwardRef<HTMLDivElement, WindowsContainerProps>(
     onPositionChange,
     onResize,
     scale,
+    updateCursorStyle,
   }, ref) => {
     const { camera, size } = useThree()
+
+    console.log('WindowsContainer updateCursorStyle:', updateCursorStyle);
 
     return (
       <div ref={ref} className='relative w-full h-full'>
@@ -59,6 +63,7 @@ const WindowsContainer = forwardRef<HTMLDivElement, WindowsContainerProps>(
             height={window.height}
             camera={camera}
             size={size}
+            updateCursorStyle={updateCursorStyle}
           />
         ))}
       </div>
