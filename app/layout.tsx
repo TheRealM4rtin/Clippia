@@ -6,7 +6,7 @@ import '98.css' // Import the 98.css package
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Fenestro.io',
+  title: 'clippia.io',
   description: 'Bring back the old internet',
 }
 

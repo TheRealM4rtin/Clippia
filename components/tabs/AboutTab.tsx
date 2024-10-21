@@ -3,7 +3,7 @@ import React from 'react'
 const AboutTab: React.FC = () => {
   return (
     <div>
-      <p>Fenestro.io v1.0</p>
+      <p>clippia.io v1.0</p>
       <ul style={{ textDecoration: 'underline' }}>Features</ul>
       <div>
         <li>Infinite whiteboard</li>
