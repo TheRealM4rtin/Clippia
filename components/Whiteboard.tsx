@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import * as THREE from 'three'
-import TextWindow from './TextWindow'
-import Panel from './Panel'
+import TextWindow from '@/components/TextWindow'
+import Panel from '@/components/Panel'
+import CameraController from '@/components/CameraController'
 
 interface Window {
   id: number
@@ -11,9 +11,20 @@ interface Window {
   x: number
   y: number
   zIndex: number
-  creationTime: Date;
+  creationTime: Date
   width: number
   height: number
+}
+
+interface SceneProps {
+  windows: Window[]
+  updateWindowPosition: (id: number, newX: number, newY: number) => void
+  removeWindow: (id: number) => void
+  updateWindowText: (id: number, text: string) => void
+  updateWindowTitle: (id: number, title: string) => void
+  updateWindowSize: (id: number, width: number, height: number) => void
+  cameraPosition: { x: number; y: number }
+  cameraZoom: number
 }
 
 function Scene({ 
@@ -25,7 +36,7 @@ function Scene({
   updateWindowSize,
   cameraPosition,
   cameraZoom
-}) {
+}: SceneProps) {
   const { camera, size } = useThree()
   
   useEffect(() => {
@@ -54,11 +65,12 @@ function Scene({
           onTitleChange={(title) => updateWindowTitle(window.id, title)}
           onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
           scale={1 / cameraZoom}
-          cameraZoom={cameraZoom}
           creationTime={window.creationTime}
           onResize={(width, height) => updateWindowSize(window.id, width, height)}
           width={window.width}
           height={window.height}
+          camera={camera}
+          size={size} 
         />
       ))}
     </>
@@ -70,73 +82,33 @@ const Whiteboard: React.FC = () => {
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 })
   const [cameraZoom, setCameraZoom] = useState(1)
   const [isPanning, setIsPanning] = useState(false)
-  const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 })
   const canvasRef = useRef<HTMLDivElement>(null)
-  const overlayRef = useRef<HTMLDivElement>(null)
-  const [cursorStyle, setCursorStyle] = useState('default')
+  const [cursorStyle, setCursorStyle] = useState('grab')
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
-  const handleMouseDown = useCallback((event: React.MouseEvent) => {
-    const target = event.target as HTMLElement;
-    if (target === overlayRef.current || !target.closest('.window')) {
-      setIsPanning(true)
-      setLastMousePosition({ x: event.clientX, y: event.clientY })
-      setCursorStyle('move')
-    }
-  }, [])
-
-  const handleMouseMove = useCallback((event: React.MouseEvent) => {
-    if (isPanning) {
-      const deltaX = event.clientX - lastMousePosition.x
-      const deltaY = event.clientY - lastMousePosition.y
-      setCameraPosition(prev => ({
-        x: prev.x - deltaX / (cameraZoom * 50),
-        y: prev.y + deltaY / (cameraZoom * 50)
-      }))
-      setLastMousePosition({ x: event.clientX, y: event.clientY })
-    }
-  }, [isPanning, lastMousePosition, cameraZoom])
-
-  const handleMouseUp = useCallback(() => {
-    setIsPanning(false)
-    setCursorStyle('default')
-  }, [])
-
-  const handleOverlayMouseDown = useCallback((event: React.MouseEvent) => {
-    // Prevent event from propagating to TextWindow components
-    event.stopPropagation()
-    handleMouseDown(event)
-  }, [handleMouseDown])
-
-  const handleWheel = useCallback((event: WheelEvent) => {
-    event.preventDefault()
-    const zoomSpeed = 0.1
-    const delta = event.deltaY > 0 ? 1 - zoomSpeed : 1 + zoomSpeed
-    setCameraZoom(prev => Math.max(0.1, Math.min(10, prev * delta)))
-  }, [])
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (canvas) {
-      canvas.addEventListener('wheel', handleWheel, { passive: false })
-    }
-    return () => {
-      if (canvas) {
-        canvas.removeEventListener('wheel', handleWheel)
-      }
-    }
-  }, [handleWheel])
+    const updateSize = () => {
+      setCanvasSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+    window.addEventListener('resize', updateSize);
+    updateSize();
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   const addWindow = useCallback(() => {
     const defaultWidth = 400
     const defaultHeight = 320
-    const offset = 2 / (cameraZoom * 50) // Convert 5 units to world space
+    const offset = 2 / (cameraZoom * 50)
 
     let newX: number, newY: number
 
     if (windows.length > 0) {
       const lastWindow = windows[windows.length - 1]
       
-      // Check if the last window is within the current view
       const viewLeft = cameraPosition.x - (defaultWidth / 2) / (cameraZoom * 50)
       const viewRight = cameraPosition.x + (defaultWidth / 2) / (cameraZoom * 50)
       const viewTop = cameraPosition.y + (defaultHeight / 2) / (cameraZoom * 50)
@@ -144,25 +116,21 @@ const Whiteboard: React.FC = () => {
 
       if (lastWindow.x >= viewLeft && lastWindow.x <= viewRight &&
           lastWindow.y >= viewBottom && lastWindow.y <= viewTop) {
-        // Position new window relative to the last one
         newX = lastWindow.x + offset
         newY = lastWindow.y - offset
       } else {
-        // Center the window in the current view
         newX = cameraPosition.x
         newY = cameraPosition.y
       }
     } else {
-      // If it's the first window, center it in the view
       newX = cameraPosition.x
       newY = cameraPosition.y
     }
 
-    // Adjust for the window size
     newX -= (defaultWidth / 4) / (cameraZoom * 50)
     newY += (defaultHeight / 4) / (cameraZoom * 50)
 
-    const newWindow = { 
+    const newWindow: Window = { 
       id: Date.now(), 
       title: 'New Window',
       text: 'New Window Content', 
@@ -175,6 +143,7 @@ const Whiteboard: React.FC = () => {
     }
     setWindows(prevWindows => [...prevWindows, newWindow])
   }, [cameraPosition, cameraZoom, windows])
+
   const removeWindow = useCallback((id: number) => {
     setWindows(prevWindows => prevWindows.filter(window => window.id !== id))
   }, [])
@@ -198,12 +167,11 @@ const Whiteboard: React.FC = () => {
   }, [])
 
   const updateWindowSize = useCallback((id: number, width: number, height: number) => {
-    console.log('Updating window size', id, width, height);
     setWindows(prevWindows =>
       prevWindows.map(window =>
         window.id === id ? { ...window, width, height } : window
       )
-    );
+    )
   }, [])
 
   const resetView = useCallback(() => {
@@ -211,22 +179,31 @@ const Whiteboard: React.FC = () => {
     setCameraZoom(1)
   }, [])
 
+
   return (
-    <div 
-      ref={canvasRef}
-      className="relative w-screen h-screen overflow-hidden"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      style={{ cursor: cursorStyle }}
-    >
+    <div className="w-full h-full overflow-hidden" style={{ cursor: cursorStyle }}>
       <Canvas
         orthographic
         camera={{ zoom: 50, position: [0, 0, 100] }}
         dpr={window.devicePixelRatio}
-        gl={{ antialias: true }}
+        style={{
+          width: '100vw',
+          height: '100vh',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+        }}
+        gl={{ preserveDrawingBuffer: true }}
       >
+        <CameraController
+          cameraPosition={cameraPosition}
+          setCameraPosition={setCameraPosition}
+          cameraZoom={cameraZoom}
+          setCameraZoom={setCameraZoom}
+          isPanning={isPanning}
+          setIsPanning={setIsPanning}
+          setCursorStyle={setCursorStyle}
+        />
         <Scene
           windows={windows}
           updateWindowPosition={updateWindowPosition}
@@ -238,22 +215,16 @@ const Whiteboard: React.FC = () => {
           cameraZoom={cameraZoom}
         />
       </Canvas>
-      <div 
-        ref={overlayRef}
-        className="absolute inset-0 pointer-events-none"
-        style={{ 
-          touchAction: 'none',
-          zIndex: 1
-        }}
-      />
-      <Panel
-        windowCount={windows.length}
-        x={cameraPosition.x}
-        y={cameraPosition.y}
-        scale={cameraZoom}
-        onAddWindow={addWindow}
-        onResetView={resetView}
-      />
+      <div className="absolute top-4 left-4 z-10">
+        <Panel
+          windowCount={windows.length}
+          x={cameraPosition.x}
+          y={cameraPosition.y}
+          scale={cameraZoom}
+          onAddWindow={addWindow}
+          onResetView={resetView}
+        />
+      </div>
     </div>
   )
 }

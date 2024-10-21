@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import "98.css";
 
 
 const Feedback: React.FC = () => {

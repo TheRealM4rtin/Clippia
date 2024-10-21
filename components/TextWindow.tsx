@@ -1,6 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react'
 import { Html } from '@react-three/drei'
-import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { format } from 'date-fns'
 import { useEditor, EditorContent } from '@tiptap/react'
@@ -8,7 +7,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from 'tiptap-markdown'
 import BulletList from '@tiptap/extension-bullet-list'
 import ListItem from '@tiptap/extension-list-item'
-import '../app/tiptap.css'
+import '@/app/tiptap.css'
 
 interface TextWindowProps {
   id: number
@@ -27,39 +26,45 @@ interface TextWindowProps {
   onResize: (width: number, height: number) => void
   width: number
   height: number
+  camera: THREE.Camera | undefined
+  size: { width: number; height: number } | undefined
 }
 
-const TextWindow: React.FC<TextWindowProps> = ({
-  id,
-  initialTitle,
-  initialText,
-  position,
-  zIndex,
-  onClose,
-  onMinimize,
-  onMaximize,
-  onTextChange,
-  onTitleChange,
-  onPositionChange,
-  scale,
-  creationTime,
-  onResize,
-  width,
-  height,
-}) => {
+const TextWindow: React.FC<TextWindowProps> = (props) => {
+  const {
+    // eslint-disable-next-line
+    id,
+    initialTitle,
+    initialText,
+    position,
+    zIndex,
+    onClose,
+    onMinimize,
+    onMaximize,
+    onTextChange,
+    onTitleChange,
+    onPositionChange,
+    scale,
+    creationTime,
+    onResize,
+    width,
+    height,
+    camera,
+    size,
+  } = props
+
   const [title, setTitle] = useState(initialTitle)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [isResizing, setIsResizing] = useState(false)
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 })
+  const [initialSize, setInitialSize] = useState({ width, height })
   const windowRef = useRef<HTMLDivElement>(null)
-  const { camera, size } = useThree()
-  const [initialSize, setInitialSize] = useState({ width: 0, height: 0 })
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        bulletList: false, // Disable the default bullet list to use our custom one
+        bulletList: false,
       }),
       Markdown,
       BulletList,
@@ -78,57 +83,28 @@ const TextWindow: React.FC<TextWindowProps> = ({
     },
   })
 
-  const handleTitleBarMouseDown = useCallback((event: React.MouseEvent) => {
+  const handleDragStart = useCallback((event: React.MouseEvent) => {
     event.stopPropagation()
     setIsDragging(true)
-    const worldPosition = new THREE.Vector3(position[0], position[1], 0)
-    const screenPosition = worldPosition.project(camera)
-    const x = (screenPosition.x + 1) * size.width / 2
-    const y = (-screenPosition.y + 1) * size.height / 2
-    setDragStart({ x: event.clientX - x, y: event.clientY - y })
-  }, [camera, position, size])
+    if (camera && size) {
+      const worldPosition = new THREE.Vector3(position[0], position[1], 0)
+      const screenPosition = worldPosition.project(camera)
+      const x = (screenPosition.x + 1) * size.width / 2
+      const y = (-screenPosition.y + 1) * size.height / 2
+      setDragStart({ x: event.clientX - x, y: event.clientY - y })
+    } else {
+      setDragStart({ x: event.clientX, y: event.clientY })
+    }
+  }, [camera, size, position])
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
-    if (isDragging) {
+    if (isDragging && camera && size) {
       event.preventDefault()
       const x = (event.clientX - dragStart.x) / size.width * 2 - 1
       const y = -(event.clientY - dragStart.y) / size.height * 2 + 1
       const vector = new THREE.Vector3(x, y, 0).unproject(camera)
       onPositionChange(vector.x, vector.y)
     }
-  }, [isDragging, dragStart, onPositionChange, camera, size])
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
-  }, [])
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove)
-      window.addEventListener('mouseup', handleMouseUp)
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp])
-
-  const handleTitleChange = useCallback((event: React.FocusEvent<HTMLSpanElement>) => {
-    const newTitle = event.target.textContent || 'Untitled'
-    setTitle(newTitle)
-    onTitleChange(newTitle)
-  }, [onTitleChange])
-
-  const formattedCreationTime = format(creationTime, 'MMM d, yyyy HH:mm:ss')
-
-  const handleResizeMouseDown = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation()
-    setIsResizing(true)
-    setResizeStart({ x: event.clientX, y: event.clientY })
-    setInitialSize({ width: width, height: height })
-  }, [width, height])
-
-  const handleResizeMouseMove = useCallback((event: MouseEvent) => {
     if (isResizing) {
       event.preventDefault()
       const deltaX = (event.clientX - resizeStart.x) / scale
@@ -143,22 +119,36 @@ const TextWindow: React.FC<TextWindowProps> = ({
 
       onResize(clampedWidth, clampedHeight)
     }
-  }, [isResizing, scale, resizeStart, initialSize, onResize])
+  }, [isDragging, isResizing, dragStart, resizeStart, camera, size, scale, initialSize, onPositionChange, onResize])
 
-  const handleResizeMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
     setIsResizing(false)
   }, [])
 
   useEffect(() => {
-    if (isResizing) {
-      window.addEventListener('mousemove', handleResizeMouseMove)
-      window.addEventListener('mouseup', handleResizeMouseUp)
-    }
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
     return () => {
-      window.removeEventListener('mousemove', handleResizeMouseMove)
-      window.removeEventListener('mouseup', handleResizeMouseUp)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isResizing, handleResizeMouseMove, handleResizeMouseUp])
+  }, [handleMouseMove, handleMouseUp])
+
+  const handleResizeStart = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation()
+    setIsResizing(true)
+    setResizeStart({ x: event.clientX, y: event.clientY })
+    setInitialSize({ width, height })
+  }, [width, height])
+
+  const handleTitleChange = useCallback((event: React.FocusEvent<HTMLSpanElement>) => {
+    const newTitle = event.target.textContent || 'Untitled'
+    setTitle(newTitle)
+    onTitleChange(newTitle)
+  }, [onTitleChange])
+
+  const formattedCreationTime = format(creationTime, 'MMM d, yyyy HH:mm:ss')
 
   return (
     <group position={position}>
@@ -188,7 +178,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
         >
           <div 
             className="title-bar" 
-            onMouseDown={handleTitleBarMouseDown}
+            onMouseDown={handleDragStart}
             style={{ cursor: 'move' }}
           >
             <span
@@ -222,7 +212,7 @@ const TextWindow: React.FC<TextWindowProps> = ({
               background: 'linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.4) 50%)',
               zIndex: 1000,
             }}
-            onMouseDown={handleResizeMouseDown}
+            onMouseDown={handleResizeStart}
           />
         </div>
       </Html>

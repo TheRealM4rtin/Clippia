@@ -5,9 +5,9 @@ export async function POST(request: Request) {
   try {
     const { username, feedback } = await request.json();
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('feedback')
-      .insert([{ username, feedback }]);
+      .insert({ username, feedback });
 
     if (error) {
       console.error('Supabase error:', error);
