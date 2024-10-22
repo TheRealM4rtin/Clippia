@@ -89,14 +89,19 @@ const LoginTab: React.FC = () => {
         />
       </div>
 
-      <ButtonPanel>
+
+      <div>
+        <button disabled>Login (soon)</button>
+      </div>
+
+      {/* <ButtonPanel>
         <ButtonPanel.Button onClick={handleLogin}>
           Login
         </ButtonPanel.Button>
         <ButtonPanel.Button onClick={handleSubscribe}>
           Take a sub
         </ButtonPanel.Button>
-      </ButtonPanel>
+      </ButtonPanel> */}
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <strong style={{ color: 'purple' }}>✨Take a sub and access premium features ✨</strong>
