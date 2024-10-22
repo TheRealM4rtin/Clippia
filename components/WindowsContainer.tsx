@@ -12,6 +12,7 @@ interface Window {
   creationTime: Date
   width: number
   height: number
+  isNew: boolean
 }
 
 interface WindowsContainerProps {
@@ -64,6 +65,7 @@ const WindowsContainer = forwardRef<HTMLDivElement, WindowsContainerProps>(
             camera={camera}
             size={size}
             updateCursorStyle={updateCursorStyle}
+            isNew={window.isNew}
           />
         ))}
       </div>

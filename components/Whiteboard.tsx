@@ -16,6 +16,7 @@ interface Window {
   creationTime: Date
   width: number
   height: number
+  isNew: boolean
 }
 
 interface SceneProps {
@@ -76,6 +77,7 @@ function Scene({
           camera={camera}
           size={size} 
           updateCursorStyle={updateCursorStyle}
+          isNew={window.isNew}
         />
       ))}
     </>
@@ -93,8 +95,9 @@ const Whiteboard: React.FC = () => {
   const [cursorStyle, setCursorStyle] = useState('default')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
-  const [cloudBackground, setCloudBackground] = useState(false)
+  const [colorBackground, setColorBackground] = useState(false)
   const [disableAnimation, setDisableAnimation] = useState(false)
+  const [cloudBackground, setCloudBackground] = useState(false)
 
   useEffect(() => {
     const updateSize = () => {
@@ -142,13 +145,14 @@ const Whiteboard: React.FC = () => {
     const newWindow: Window = { 
       id: Date.now(), 
       title: 'New Window',
-      text: 'New Window Content', 
+      text: 'Type here to start...', 
       x: newX,
       y: newY,
       zIndex: windows.length,
       creationTime: new Date(),
       width: defaultWidth,
       height: defaultHeight,
+      isNew: true,
     }
     setWindows(prevWindows => [...prevWindows, newWindow])
   }, [cameraPosition, cameraZoom, windows])
@@ -200,14 +204,20 @@ const Whiteboard: React.FC = () => {
     setDisableAnimation(prev => !prev)
   }, [])
 
+  const toggleColorBackground = useCallback(() => {
+    setColorBackground(prev => !prev)
+  }, [])
+
   return (
     <main className={styles.whiteboard}>
-      {cloudBackground && 
+      {colorBackground ? (
+        <div className={styles.colorBackground} aria-hidden="true" />
+      ) : (
         <div 
           className={`${styles.cloudBackground} ${!disableAnimation ? styles.animated : ''}`} 
           aria-hidden="true"
         />
-      }
+      )}
       <Canvas
         orthographic
         camera={{ zoom: 50, position: [0, 0, 100] }}
@@ -244,10 +254,12 @@ const Whiteboard: React.FC = () => {
           scale={cameraZoom}
           onAddWindow={addWindow}
           onResetView={resetView}
-          cloudBackground={cloudBackground}
-          toggleCloudBackground={toggleCloudBackground}
+          colorBackground={colorBackground}
+          toggleColorBackground={toggleColorBackground}
           disableAnimation={disableAnimation}
           toggleCloudAnimation={toggleCloudAnimation}
+          cloudBackground={cloudBackground}
+          toggleCloudBackground={toggleCloudBackground}
         />
       </div>
     </main>

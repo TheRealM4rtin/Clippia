@@ -6,10 +6,12 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from 'tiptap-markdown'
 import BulletList from '@tiptap/extension-bullet-list'
-import ListItem from '@tiptap/extension-list-item'
+import ListItem from '@tiptap/extension-list-item'  
+import Placeholder from '@tiptap/extension-placeholder'
 import '@/app/tiptap.css'
 //import '@/app/windows98.css' // Add this new import for Windows 98 styles
 import "xp.css/dist/98.css";
+import '@/components/style.scss'
 
 interface TextWindowProps {
   id: number
@@ -31,6 +33,7 @@ interface TextWindowProps {
   camera: THREE.Camera | undefined
   size: { width: number; height: number } | undefined
   updateCursorStyle: (style: string) => void
+  isNew?: boolean
 }
 
 const TextWindow: React.FC<TextWindowProps> = (props) => {
@@ -55,6 +58,7 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
     camera,
     size,
     updateCursorStyle,
+    isNew,
   } = props
 
   console.log('TextWindow props:', props);
@@ -76,18 +80,21 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
       Markdown,
       BulletList,
       ListItem,
+      Placeholder.configure({
+        placeholder: initialText,
+      })
     ],
-    content: initialText || 'New Window Content',
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      onTextChange(html)
-    },
     editorProps: {
       attributes: {
         class: 'windows98-text',
         style: 'height: 100%; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; padding: 4px;',
       },
     },
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML()
+      onTextChange(html)
+    },
+    autofocus: isNew ? 'end' : undefined,
   })
 
   const handleDragStart = useCallback((event: React.MouseEvent) => {

@@ -21,7 +21,9 @@ interface PanelProps {
 
 const Panel: React.FC<PanelProps> = ({ 
   windowCount, x, y, scale, onAddWindow, onResetView,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   cloudBackground,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   toggleCloudBackground,
   disableAnimation,
   toggleCloudAnimation,
