@@ -1,0 +1,48 @@
+@font-face {
+  font-family: 'MS Sans Serif';
+  src: url('/fonts/MS-Sans-Serif.woff2') format('woff2'),
+       url('/fonts/MS-Sans-Serif.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Levi Windows';
+  src: url('/fonts/LeviWindows.woff2') format('woff2'),
+       url('/fonts/LeviWindows.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.windows98-window {
+  background-color: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #dfdfdf;
+  border-left-color: #dfdfdf;
+  border-right-color: #000;
+  border-bottom-color: #000;
+  box-shadow: 1px 1px 0 0 #808080;
+}
+
+.windows98-window-body {
+  background-color: #c0c0c0;
+}
+
+.windows98-text {
+  font-family: 'MS Sans Serif', 'Levi Windows', 'Pixelated MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
+  font-size: 12px;
+  color: #000;
+  line-height: 1.2;
+  background-color: #fff;
+  border: 1px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-right-color: #dfdfdf;
+  border-bottom-color: #dfdfdf;
+  padding: 2px;
+}
+
+.windows98-text:focus {
+  outline: none;
+  border-color: #000;
+}

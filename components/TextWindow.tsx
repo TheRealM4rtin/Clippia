@@ -8,6 +8,7 @@ import { Markdown } from 'tiptap-markdown'
 import BulletList from '@tiptap/extension-bullet-list'
 import ListItem from '@tiptap/extension-list-item'
 import '@/app/tiptap.css'
+import '@/app/windows98.css' // Add this new import for Windows 98 styles
 
 interface TextWindowProps {
   id: number
@@ -82,8 +83,8 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm focus:outline-none',
-        style: 'height: 100%; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: white; color: black; padding: 4px;',
+        class: 'windows98-text',
+        style: 'height: 100%; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; padding: 4px;',
       },
     },
   })

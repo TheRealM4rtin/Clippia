@@ -11,10 +11,18 @@ interface PanelProps {
   scale: number
   onAddWindow: () => void
   onResetView: () => void
+  cloudBackground: boolean
+  toggleCloudBackground: () => void
+  disableAnimation: boolean
+  toggleCloudAnimation: () => void
 }
 
 const Panel: React.FC<PanelProps> = ({ 
-  windowCount, x, y, scale, onAddWindow, onResetView
+  windowCount, x, y, scale, onAddWindow, onResetView,
+  cloudBackground,
+  toggleCloudBackground,
+  disableAnimation,
+  toggleCloudAnimation
 }) => {
   const [activeTab, setActiveTab] = useState('menu');
 
@@ -55,7 +63,11 @@ const Panel: React.FC<PanelProps> = ({
           y={y} 
           scale={scale} 
           onAddWindow={onAddWindow} 
-          onResetView={onResetView} 
+          onResetView={onResetView}
+          cloudBackground={cloudBackground}
+          toggleCloudBackground={toggleCloudBackground}
+          disableAnimation={disableAnimation}
+          toggleCloudAnimation={toggleCloudAnimation}
         />;
       case 'about':
         return <AboutTab />;

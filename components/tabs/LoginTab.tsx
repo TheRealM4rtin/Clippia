@@ -99,7 +99,7 @@ const LoginTab: React.FC = () => {
       </ButtonPanel>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      <strong style={{ color: 'purple' }}>✨ Take a sub to login and access premium features ✨</strong>
+      <strong style={{ color: 'purple' }}>✨Take a sub and access premium features ✨</strong>
     </div>
   );
 };

@@ -8,15 +8,19 @@ interface MenuTabProps {
   scale: number
   onAddWindow: () => void
   onResetView: () => void
+  cloudBackground: boolean
+  toggleCloudBackground: () => void
+  disableAnimation: boolean
+  toggleCloudAnimation: () => void
 }
 
 const MenuTab: React.FC<MenuTabProps> = ({ 
-  windowCount, x, y, scale, onAddWindow, onResetView 
+  windowCount, x, y, scale, onAddWindow, onResetView,
+  cloudBackground, toggleCloudBackground, disableAnimation, toggleCloudAnimation
 }) => {
   const handleButtonClick = (action: () => void) => (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    console.log('Button clicked'); // Add this line for debugging
     action();
   };
 
@@ -33,6 +37,40 @@ const MenuTab: React.FC<MenuTabProps> = ({
           Reset View
         </ButtonPanel.Button>
       </ButtonPanel>
+      <div style={{ marginTop: '10px' }}>
+        <p>Cloud Background:</p>
+        <div className="field-row">
+          <input 
+            id="radio-cloud-yes" 
+            type="radio" 
+            name="cloud-background"
+            checked={cloudBackground}
+            onChange={() => toggleCloudBackground()}
+          />
+          <label htmlFor="radio-cloud-yes">Yes</label>
+        </div>
+        <div className="field-row">
+          <input 
+            id="radio-cloud-no" 
+            type="radio" 
+            name="cloud-background"
+            checked={!cloudBackground}
+            onChange={() => toggleCloudBackground()}
+          />
+          <label htmlFor="radio-cloud-no">No</label>
+        </div>
+      </div>
+      {cloudBackground && (
+        <div style={{ marginTop: '5px' }}>
+          <input 
+            type="checkbox" 
+            id="disable-animation"
+            checked={disableAnimation}
+            onChange={toggleCloudAnimation}
+          />
+          <label htmlFor="disable-animation">Disable Cloud Animation</label>
+        </div>
+      )}
     </div>
   )
 }

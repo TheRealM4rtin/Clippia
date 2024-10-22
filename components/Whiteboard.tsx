@@ -4,6 +4,7 @@ import TextWindow from '@/components/TextWindow'
 import Panel from '@/components/Panel'
 import CameraController from '@/components/CameraController'
 import WindowsContainer from './WindowsContainer'
+import styles from './whiteboard.module.css';
 
 interface Window {
   id: number
@@ -89,7 +90,8 @@ const Whiteboard: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [cursorStyle, setCursorStyle] = useState('default')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
-
+  const [cloudBackground, setCloudBackground] = useState(false)
+  const [disableAnimation, setDisableAnimation] = useState(false)
 
   useEffect(() => {
     const updateSize = () => {
@@ -187,20 +189,28 @@ const Whiteboard: React.FC = () => {
     setCursorStyle(style);
   }, []);
 
+  const toggleCloudBackground = useCallback(() => {
+    setCloudBackground(prev => !prev)
+  }, [])
+
+  const toggleCloudAnimation = useCallback(() => {
+    setDisableAnimation(prev => !prev)
+  }, [])
+
   return (
-    <div className="w-full h-full overflow-hidden" style={{ cursor: cursorStyle }}>
+    <main className={styles.whiteboard}>
+      {cloudBackground && 
+        <div 
+          className={`${styles.cloudBackground} ${!disableAnimation ? styles.animated : ''}`} 
+          aria-hidden="true"
+        />
+      }
       <Canvas
         orthographic
         camera={{ zoom: 50, position: [0, 0, 100] }}
         dpr={window.devicePixelRatio}
-        style={{
-          width: '100vw',
-          height: '100vh',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-        }}
-        gl={{ preserveDrawingBuffer: true }}
+        className={styles.canvas}
+        gl={{ preserveDrawingBuffer: true, alpha: true }}
       >
         <CameraController
           cameraPosition={cameraPosition}
@@ -223,7 +233,7 @@ const Whiteboard: React.FC = () => {
           updateCursorStyle={updateCursorStyle}
         />
       </Canvas>
-      <div className="absolute top-4 left-4 z-10">
+      <div className={styles.panel}>
         <Panel
           windowCount={windows.length}
           x={cameraPosition.x}
@@ -231,9 +241,13 @@ const Whiteboard: React.FC = () => {
           scale={cameraZoom}
           onAddWindow={addWindow}
           onResetView={resetView}
+          cloudBackground={cloudBackground}
+          toggleCloudBackground={toggleCloudBackground}
+          disableAnimation={disableAnimation}
+          toggleCloudAnimation={toggleCloudAnimation}
         />
       </div>
-    </div>
+    </main>
   )
 }
 

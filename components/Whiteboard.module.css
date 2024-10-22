@@ -1,0 +1,63 @@
+/* Windows 98 Cloud Background Module */
+.background {
+    /* Base background color matching the image's sky blue */
+    background-color: #87CEEB;
+    
+    /* Create a repeating cloud pattern using multiple layered gradients */
+    background-image: 
+      /* Large cloud formations */
+      radial-gradient(
+        circle at 50% 50%,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(255, 255, 255, 0.3) 30%,
+        transparent 70%
+      ),
+      /* Medium cloud formations */
+      radial-gradient(
+        circle at 20% 30%,
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(255, 255, 255, 0.2) 40%,
+        transparent 60%
+      ),
+      /* Small cloud wisps */
+      radial-gradient(
+        circle at 70% 65%,
+        rgba(255, 255, 255, 0.6) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%
+      );
+    
+    /* Create pixelated effect */
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    
+    /* Set up background properties for infinite tiling */
+    background-size: 256px 256px;
+    background-repeat: repeat;
+    
+    /* Add Windows 98-style inset border effect */
+    border: 2px solid;
+    border-color: #dfdfdf #404040 #404040 #dfdfdf;
+    
+    /* Apply cloud animation */
+    animation: cloudDrift 30s linear infinite;
+  }
+  
+  /* Cloud movement animation */
+  @keyframes cloudDrift {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 256px 0;
+    }
+  }
+  
+  /* Performance optimization for hardware acceleration */
+  .background {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+    will-change: background-position;
+  }
