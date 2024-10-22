@@ -8,7 +8,8 @@ import { Markdown } from 'tiptap-markdown'
 import BulletList from '@tiptap/extension-bullet-list'
 import ListItem from '@tiptap/extension-list-item'
 import '@/app/tiptap.css'
-import '@/app/windows98.css' // Add this new import for Windows 98 styles
+//import '@/app/windows98.css' // Add this new import for Windows 98 styles
+import "xp.css/dist/98.css";
 
 interface TextWindowProps {
   id: number
@@ -247,7 +248,7 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
               width: '20px',
               height: '20px',
               cursor: 'se-resize',
-              background: 'linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.4) 50%)',
+              //background: 'linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.4) 50%)',
               zIndex: 1000,
             }}
             onMouseDown={handleResizeStart}
