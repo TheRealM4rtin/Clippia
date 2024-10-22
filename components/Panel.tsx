@@ -15,6 +15,8 @@ interface PanelProps {
   toggleCloudBackground: () => void
   disableAnimation: boolean
   toggleCloudAnimation: () => void
+  colorBackground: boolean
+  toggleColorBackground: () => void
 }
 
 const Panel: React.FC<PanelProps> = ({ 
@@ -22,7 +24,9 @@ const Panel: React.FC<PanelProps> = ({
   cloudBackground,
   toggleCloudBackground,
   disableAnimation,
-  toggleCloudAnimation
+  toggleCloudAnimation,
+  colorBackground,
+  toggleColorBackground
 }) => {
   const [activeTab, setActiveTab] = useState('menu');
 
@@ -64,8 +68,8 @@ const Panel: React.FC<PanelProps> = ({
           scale={scale} 
           onAddWindow={onAddWindow} 
           onResetView={onResetView}
-          cloudBackground={cloudBackground}
-          toggleCloudBackground={toggleCloudBackground}
+          colorBackground={colorBackground}
+          toggleColorBackground={toggleColorBackground}
           disableAnimation={disableAnimation}
           toggleCloudAnimation={toggleCloudAnimation}
         />;

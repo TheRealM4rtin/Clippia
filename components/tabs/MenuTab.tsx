@@ -8,15 +8,15 @@ interface MenuTabProps {
   scale: number
   onAddWindow: () => void
   onResetView: () => void
-  cloudBackground: boolean
-  toggleCloudBackground: () => void
+  colorBackground: boolean
+  toggleColorBackground: () => void
   disableAnimation: boolean
   toggleCloudAnimation: () => void
 }
 
 const MenuTab: React.FC<MenuTabProps> = ({ 
   windowCount, x, y, scale, onAddWindow, onResetView,
-  cloudBackground, toggleCloudBackground, disableAnimation, toggleCloudAnimation
+  colorBackground, toggleColorBackground, disableAnimation, toggleCloudAnimation
 }) => {
   const handleButtonClick = (action: () => void) => (event: React.MouseEvent) => {
     event.preventDefault();
@@ -38,29 +38,29 @@ const MenuTab: React.FC<MenuTabProps> = ({
         </ButtonPanel.Button>
       </ButtonPanel>
       <div style={{ marginTop: '10px' }}>
-        <p>Cloud Background:</p>
+        <p>Color Background:</p>
         <div className="field-row">
           <input 
-            id="radio-cloud-yes" 
+            id="radio-color-yes" 
             type="radio" 
-            name="cloud-background"
-            checked={cloudBackground}
-            onChange={() => toggleCloudBackground()}
+            name="color-background"
+            checked={colorBackground}
+            onChange={() => toggleColorBackground()}
           />
-          <label htmlFor="radio-cloud-yes">Yes</label>
+          <label htmlFor="radio-color-yes">Yes</label>
         </div>
         <div className="field-row">
           <input 
-            id="radio-cloud-no" 
+            id="radio-color-no" 
             type="radio" 
-            name="cloud-background"
-            checked={!cloudBackground}
-            onChange={() => toggleCloudBackground()}
+            name="color-background"
+            checked={!colorBackground}
+            onChange={() => toggleColorBackground()}
           />
-          <label htmlFor="radio-cloud-no">No</label>
+          <label htmlFor="radio-color-no">No</label>
         </div>
       </div>
-      {cloudBackground && (
+      {!colorBackground && (
         <div style={{ marginTop: '5px' }}>
           <input 
             type="checkbox" 

@@ -29,4 +29,12 @@
   }
 
 
-
+  .colorBackground {
+    background-color: #008080; /* Windows 95/98 teal color */
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
