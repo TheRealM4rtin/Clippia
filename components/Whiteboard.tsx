@@ -3,7 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import TextWindow from '@/components/TextWindow'
 import Panel from '@/components/Panel'
 import CameraController from '@/components/CameraController'
-import WindowsContainer from './WindowsContainer'
+//import WindowsContainer from './WindowsContainer'
 import styles from './whiteboard.module.css';
 
 interface Window {
@@ -87,8 +87,11 @@ const Whiteboard: React.FC = () => {
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 })
   const [cameraZoom, setCameraZoom] = useState(1)
   const [isPanning, setIsPanning] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const canvasRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [cursorStyle, setCursorStyle] = useState('default')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [cloudBackground, setCloudBackground] = useState(false)
   const [disableAnimation, setDisableAnimation] = useState(false)
