@@ -8,6 +8,9 @@ import { Markdown } from 'tiptap-markdown'
 import BulletList from '@tiptap/extension-bullet-list'
 import ListItem from '@tiptap/extension-list-item'  
 import Placeholder from '@tiptap/extension-placeholder'
+// import ExportButton from '@/components/ExportButton'
+import html2canvas from 'html2canvas'
+
 import '@/app/tiptap.css'
 //import '@/app/windows98.css' // Add this new import for Windows 98 styles
 import "xp.css/dist/98.css";
@@ -190,6 +193,49 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
     }
   }, [editor, handleEditorFocus, handleEditorBlur])
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleExport = useCallback(async () => {
+    if (windowRef.current) {
+      try {
+        // Set temporary styles for better export quality
+        const element = windowRef.current;
+        const originalTransform = element.style.transform;
+        element.style.transform = 'none';
+  
+        const canvas = await html2canvas(element, {
+          scale: 2, // Increase quality
+          useCORS: true,
+          backgroundColor: null,
+          logging: false,
+          windowWidth: width,
+          windowHeight: height,
+        });
+  
+        // Restore original styles
+        element.style.transform = originalTransform;
+  
+        // Convert to blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${format(creationTime, 'yyyyMMdd_HHmmss')}.png`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/png', 1.0);
+      } catch (error) {
+        console.error('Error exporting window:', error);
+      }
+    }
+  }, [windowRef, title, creationTime, width, height]);
+
+
+
+
+
   return (
     <group position={position}>
       <Html
@@ -217,6 +263,7 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
           }}
           onMouseEnter={() => updateCursorStyle('default')}
         >
+          
           <div 
             className="title-bar" 
             onMouseDown={handleDragStart}
@@ -231,12 +278,20 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
             >
               {title}
             </span>
+
+            
             <div className="title-bar-controls">
+              
               <button aria-label="Minimize" onClick={(e) => { e.stopPropagation(); onMinimize(); }}></button>
               <button aria-label="Maximize" onClick={(e) => { e.stopPropagation(); onMaximize(); }}></button>
               <button aria-label="Close" onClick={(e) => { e.stopPropagation(); onClose(); }}></button>
             </div>
           </div>
+
+          
+
+
+
           <div className="window-body" style={{ flex: 1, padding: '5px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <EditorContent 
               editor={editor} 
@@ -246,6 +301,7 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
           </div>
           <div className="status-bar">
             <p className="status-bar-field">Created: {formattedCreationTime}</p>
+            {/* <ExportButton onExport={handleExport} /> */}
           </div>
           <div
             style={{

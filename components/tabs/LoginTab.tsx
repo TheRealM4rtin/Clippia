@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import ButtonPanel from '@/components/ButtonPanel';
+// import ButtonPanel from '@/components/ButtonPanel';
 import { loadStripe } from '@stripe/stripe-js';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -12,6 +12,7 @@ const LoginTab: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setError(null);
@@ -53,6 +54,7 @@ const LoginTab: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSubscribe = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const stripe = await stripePromise;

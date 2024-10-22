@@ -40,7 +40,7 @@ const Feedback: React.FC = () => {
   if (isSubmitted) {
     return (
       <div>
-        Thanks! :)
+        Thanks! : )
       </div>
     );
   }
