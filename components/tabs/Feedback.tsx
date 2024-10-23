@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import styles from './Feedback.module.css';
 
+interface FeedbackProps {
+  width: number;
+}
 
-const Feedback: React.FC = () => {
+const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   const [username, setUsername] = useState('');
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,70 +43,39 @@ const Feedback: React.FC = () => {
 
   if (isSubmitted) {
     return (
-      <div>
+      <div className={styles.feedback} style={{ width: width - 12 }}>
         Thanks! : )
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} >
+    <form onSubmit={handleSubmit} className={styles.feedback} style={{ width: width - 12 }}>
       <input
         type="text"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         placeholder="Your username"
-        style={inputStyle}
         disabled={isSubmitting}
       />
       <textarea
         value={feedback}
         onChange={(e) => setFeedback(e.target.value)}
         placeholder="Your feedback"
-        style={{ ...inputStyle, height: '100px' }}
         disabled={isSubmitting}
       />
-      <div>
-        <button type="submit" style={buttonStyle} disabled={isSubmitting || !username.trim() || !feedback.trim()}>
+      <div className={styles.buttonGroup}>
+        <button type="submit" disabled={isSubmitting || !username.trim() || !feedback.trim()}>
           Send
         </button>
-        <button type="button" onClick={() => { setUsername(''); setFeedback(''); setError(''); }} style={buttonStyle} disabled={isSubmitting}>
+        <button type="button" onClick={() => { setUsername(''); setFeedback(''); setError(''); }} disabled={isSubmitting}>
           Clear
         </button>
       </div>
       {isSubmitting && <div><progress></progress></div>}
-      {error && <div style={errorStyle}>{error}</div>}
+      {error && <div className={styles.error}>{error}</div>}
     </form>
   );
-};
-
-const inputStyle = {
-  display: 'block',
-  width: '100%',
-  marginBottom: '8px',
-  padding: '4px',
-  fontFamily: '"Pixelated MS Sans Serif", Arial',
-  fontSize: '11px',
-  border: '1px solid #808080',
-};
-
-const buttonStyle = {
-  fontFamily: '"Pixelated MS Sans Serif", Arial',
-  fontSize: '11px',
-  color: 'black',
-  backgroundColor: '#D4D0C8',
-  border: '1px solid #808080',
-  padding: '2px 8px',
-  marginRight: '4px',
-  cursor: 'pointer',
-};
-
-
-const errorStyle = {
-  fontFamily: '"Pixelated MS Sans Serif", Arial',
-  fontSize: '11px',
-  color: 'red',
-  marginTop: '8px',
 };
 
 export default Feedback;

@@ -8,10 +8,12 @@
 
 # testing
 /coverage
+__tests__/
 
 # next.js
 /.next/
 /out/
+
 
 # production
 /build
@@ -19,6 +21,7 @@
 # misc
 .DS_Store
 *.pem
+/.vscode
 
 # debug
 npm-debug.log*
