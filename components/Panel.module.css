@@ -1,8 +1,6 @@
 .panel {
   font-family: 'Pixelated MS Sans Serif', Arial;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-  background-color: #D4D0C8;
-  border-bottom: 1px solid #0054E3;
   pointer-events: auto;
   z-index: 10000;
   position: fixed;
