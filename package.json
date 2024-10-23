@@ -42,7 +42,8 @@
     "tiptap-markdown": "^0.8.10",
     "use-gesture": "^1.0.0",
     "winston": "^3.15.0",
-    "xp.css": "^0.2.6"
+    "xp.css": "^0.2.6",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
