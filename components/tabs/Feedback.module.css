@@ -20,7 +20,7 @@
 
 .buttonGroup {
   display: flex;
-  gap: 5px;
+  gap: 10px;
 }
 
 .buttonGroup button {
@@ -33,7 +33,21 @@
   cursor: pointer;
 }
 
+.contributionQuestion {
+  margin-top: 10px;
+}
+
+.radioGroup {
+  display: flex;
+  gap: 20px;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .error {
   color: red;
-  font-size: 11px;
 }

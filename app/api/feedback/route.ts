@@ -15,11 +15,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { username, feedback } = await request.json();
+    const { username, feedback, wouldContribute, contributionDetails } = await request.json();
 
     const { error } = await supabase
       .from('feedback')
-      .insert({ username, feedback });
+      .insert({ 
+        username, 
+        feedback, 
+        would_contribute: wouldContribute, 
+        contribution_details: contributionDetails 
+      });
 
     if (error) {
       console.error('Supabase error:', error);
