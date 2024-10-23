@@ -5,6 +5,9 @@ import Panel from '@/components/Panel'
 import CameraController from '@/components/CameraController'
 //import WindowsContainer from './WindowsContainer'
 import styles from './whiteboard.module.css';
+import MyComputerWindow from '@/components/MyComputerWindow'
+import { Computer } from '@react95/icons';
+
 
 interface Window {
   id: number
@@ -29,6 +32,10 @@ interface SceneProps {
   cameraPosition: { x: number; y: number }
   cameraZoom: number
   updateCursorStyle: (style: string) => void
+  isComputerOpen: boolean
+  computerPosition: [number, number, number]
+  onPositionChange: (x: number, y: number) => void
+  closeComputerWindow: () => void
 }
 
 function Scene({ 
@@ -40,7 +47,11 @@ function Scene({
   updateWindowSize,
   cameraPosition,
   cameraZoom,
-  updateCursorStyle
+  updateCursorStyle,
+  isComputerOpen,
+  computerPosition,
+  onPositionChange,
+  closeComputerWindow
 }: SceneProps) {
   const { camera, size } = useThree()
   
@@ -80,6 +91,20 @@ function Scene({
           isNew={window.isNew}
         />
       ))}
+
+      {isComputerOpen && (
+        <MyComputerWindow
+          position={computerPosition}
+          onClose={closeComputerWindow}
+          zIndex={1000}
+          onMinimize={() => {}}
+          onMaximize={() => {}}
+          scale={1 / cameraZoom}
+          onPositionChange={onPositionChange}
+          camera={camera}
+          size={size}
+        />
+      )}
     </>
   )
 }
@@ -98,6 +123,8 @@ const Whiteboard: React.FC = () => {
   const [colorBackground, setColorBackground] = useState(false)
   const [disableAnimation, setDisableAnimation] = useState(false)
   const [cloudBackground, setCloudBackground] = useState(false)
+  const [isComputerOpen, setIsComputerOpen] = useState(false)
+  const [myComputerPosition, setMyComputerPosition] = useState<[number, number, number]>([0, 0, 0])
 
   useEffect(() => {
     const updateSize = () => {
@@ -208,8 +235,22 @@ const Whiteboard: React.FC = () => {
     setColorBackground(prev => !prev)
   }, [])
 
+  const openComputerWindow = () => {
+    setIsComputerOpen(true);
+  };
+
+  const closeComputerWindow = () => {
+    setIsComputerOpen(false);
+  };
+
+  const handleMyComputerPosition = useCallback((x: number, y: number) => {
+    setMyComputerPosition([x, y, 0]);
+  }, []);
+
+
   return (
     <main className={styles.whiteboard}>
+      {/* Background */}
       {colorBackground ? (
         <div className={styles.colorBackground} aria-hidden="true" />
       ) : (
@@ -218,6 +259,34 @@ const Whiteboard: React.FC = () => {
           aria-hidden="true"
         />
       )}
+
+      {/* Regular DOM elements outside Canvas */}
+      <div className="absolute left-4 top-4 z-50">
+        <Panel
+          windowCount={windows.length}
+          x={cameraPosition.x}
+          y={cameraPosition.y}
+          scale={cameraZoom}
+          onAddWindow={addWindow}
+          onResetView={resetView}
+          colorBackground={colorBackground}
+          toggleColorBackground={toggleColorBackground}
+          disableAnimation={disableAnimation}
+          toggleCloudAnimation={toggleCloudAnimation}
+          cloudBackground={cloudBackground}
+          toggleCloudBackground={toggleCloudBackground}
+        />
+      </div>
+
+      <div
+        className="absolute left-0 top-0 transform -translate-y-1/2 flex flex-col items-center gap-1 hover:underline hover:underline-offset-4 cursor-pointer z-50"
+        onClick={openComputerWindow}
+      >
+        <Computer className="w-6 h-6" />
+        <span>My Computer</span>
+      </div>
+
+      {/* R3F Canvas */}
       <Canvas
         orthographic
         camera={{ zoom: 50, position: [0, 0, 100] }}
@@ -234,6 +303,7 @@ const Whiteboard: React.FC = () => {
           setIsPanning={setIsPanning}
           updateCursorStyle={updateCursorStyle}
         />
+        
         <Scene
           windows={windows}
           updateWindowPosition={updateWindowPosition}
@@ -244,26 +314,14 @@ const Whiteboard: React.FC = () => {
           cameraPosition={cameraPosition}
           cameraZoom={cameraZoom}
           updateCursorStyle={updateCursorStyle}
+          isComputerOpen={isComputerOpen}
+          computerPosition={myComputerPosition}
+          onPositionChange={handleMyComputerPosition}
+          closeComputerWindow={closeComputerWindow}
         />
       </Canvas>
-      <div className={styles.panel}>
-        <Panel
-          windowCount={windows.length}
-          x={cameraPosition.x}
-          y={cameraPosition.y}
-          scale={cameraZoom}
-          onAddWindow={addWindow}
-          onResetView={resetView}
-          colorBackground={colorBackground}
-          toggleColorBackground={toggleColorBackground}
-          disableAnimation={disableAnimation}
-          toggleCloudAnimation={toggleCloudAnimation}
-          cloudBackground={cloudBackground}
-          toggleCloudBackground={toggleCloudBackground}
-        />
-      </div>
     </main>
-  )
-}
+  );
+};
 
-export default Whiteboard
+export default Whiteboard;

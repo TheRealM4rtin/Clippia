@@ -3,6 +3,10 @@ import Feedback from '@/components/Feedback'
 import MenuTab from '@/components/tabs/MenuTab'
 import AboutTab from '@/components/tabs/AboutTab'
 import LoginTab from '@/components/tabs/LoginTab'
+import MyComputerWindow from './MyComputerWindow'
+
+import { Button } from '@react95/core';
+import { Bookmark, Computer, Explore } from '@react95/icons';
 
 interface PanelProps {
   windowCount: number
@@ -93,6 +97,7 @@ const Panel: React.FC<PanelProps> = ({
   };
 
   return (
+    <>
     <div className="panel" style={panelStyle}>
       <div style={{ display: 'flex', flexDirection: 'row' }}>
         {['menu', 'feedback', 'login', 'about'].map((tab) => (
@@ -114,7 +119,34 @@ const Panel: React.FC<PanelProps> = ({
       }}>
         {renderActiveTab()}
       </div>
+
     </div>
+
+    {/* <div
+      className="absolute left-0 top-1/2 transform -translate-y-1/2 flex flex-col items-center gap-1 hover:underline hover:underline-offset-4"
+      onClick={handleComputerIconClick}
+    >
+      <Computer className="w-6 h-6" />
+      <span>My Computer</span>
+    </div>
+
+    {isMyComputerOpen && (
+      <MyComputerWindow
+        position={[0, 0, 0]}
+        zIndex={1000}
+        onClose={handleCloseMyComputer}
+        onMinimize={() => {}}
+        onMaximize={() => {}}
+        scale={1}
+        width={300}
+        height={200}
+      />
+    )} */}
+
+    </>
+    
+    
+
   );
 };
 
