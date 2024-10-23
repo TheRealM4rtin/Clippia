@@ -280,10 +280,11 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
             height: '100%', 
             overflow: 'hidden',
             position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
           }}
           onMouseEnter={() => updateCursorStyle('default')}
         >
-          
           <div 
             className="title-bar" 
             onMouseDown={handleDragStart}
@@ -298,19 +299,12 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
             >
               {title}
             </span>
-
-            
             <div className="title-bar-controls">
-              
               <button aria-label="Minimize" onClick={(e) => { e.stopPropagation(); onMinimize(); }}></button>
               <button aria-label="Maximize" onClick={(e) => { e.stopPropagation(); onMaximize(); }}></button>
               <button aria-label="Close" onClick={(e) => { e.stopPropagation(); onClose(); }}></button>
             </div>
           </div>
-
-          
-
-
 
           <div className="window-body" style={{ 
             flex: 1, 
@@ -324,8 +318,11 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
               style={{ 
                 flex: 1, 
                 overflow: 'auto',
-                fontSize: `${16 / scale}px`, // Adjust font size based on scale
-                lineHeight: `${24 / scale}px`, // Adjust line height based on scale
+                fontSize: `${16 / scale}px`,
+                lineHeight: `${24 / scale}px`,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
               }}
               onMouseEnter={() => updateCursorStyle('text')}
             />
@@ -342,7 +339,6 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
               width: '20px',
               height: '20px',
               cursor: 'se-resize',
-              //background: 'linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.4) 50%)',
               zIndex: 1000,
             }}
             onMouseDown={handleResizeStart}
