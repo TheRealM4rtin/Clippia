@@ -12,8 +12,10 @@
     "@react-spring/web": "^9.7.5",
     "@react-three/drei": "^9.114.6",
     "@react-three/fiber": "^8.17.10",
+    "@react95/core": "^9.2.0",
     "@stripe/stripe-js": "^4.8.0",
     "@supabase/supabase-js": "^2.45.6",
+    "@tiptap/extension-link": "^2.9.1",
     "@tiptap/extension-placeholder": "^2.9.0",
     "@tiptap/react": "^2.8.0",
     "@tiptap/starter-kit": "^2.8.0",
@@ -21,8 +23,11 @@
     "@vercel/analytics": "^1.3.1",
     "98.css": "^0.1.20",
     "date-fns": "^4.1.0",
+    "dompurify": "^3.1.7",
     "framer-motion": "^11.11.9",
+    "fs": "^0.0.1-security",
     "html2canvas": "^1.4.1",
+    "isomorphic-dompurify": "^2.16.0",
     "lucide-react": "^0.453.0",
     "next": "14.2.15",
     "react": "^18",
@@ -35,16 +40,18 @@
     "three": "^0.169.0",
     "tiptap-markdown": "^0.8.10",
     "use-gesture": "^1.0.0",
+    "winston": "^3.15.0",
     "xp.css": "^0.2.6"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/tailwindcss": "^3.1.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.15",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5.6.3"
   }
 }

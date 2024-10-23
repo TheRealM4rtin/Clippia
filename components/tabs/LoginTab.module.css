@@ -1,0 +1,42 @@
+.loginTab {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.inputGroup input {
+  width: 100%;
+  padding: 4px;
+  font-family: 'Pixelated MS Sans Serif', Arial;
+  font-size: 11px;
+  border: 1px solid #808080;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
+.buttonGroup button {
+  font-family: 'Pixelated MS Sans Serif', Arial;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.error {
+  color: red;
+  font-size: 11px;
+}
+
+.subscriptionMessage {
+  color: purple;
+  font-size: 11px;
+  margin-top: 10px;
+}

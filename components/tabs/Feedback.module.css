@@ -1,0 +1,39 @@
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback input,
+.feedback textarea {
+  width: 100%;
+  padding: 4px;
+  font-family: 'Pixelated MS Sans Serif', Arial;
+  font-size: 11px;
+  border: 1px solid #808080;
+}
+
+.feedback textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 5px;
+}
+
+.buttonGroup button {
+  font-family: 'Pixelated MS Sans Serif', Arial;
+  font-size: 11px;
+  color: black;
+  background-color: #D4D0C8;
+  border: 1px solid #808080;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.error {
+  color: red;
+  font-size: 11px;
+}

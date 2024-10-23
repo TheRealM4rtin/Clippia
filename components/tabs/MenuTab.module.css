@@ -1,0 +1,32 @@
+.menuTab {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  margin-bottom: 10px;
+}
+
+.divider {
+  height: 1px;
+  background-color: #808080;
+  margin: 10px 0;
+}
+
+.computerIcon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
