@@ -1,83 +1,45 @@
-import React, { useCallback, useState } from 'react';
-import { Html } from '@react-three/drei';
-import * as THREE from 'three';
-import { Camera } from '@react-three/fiber';
-import { Wmsui323920, Notepad2 } from '@react95/icons';
+import React, { useState, useCallback } from 'react'
+import { Html } from '@react-three/drei'
+import { Wmsui323920, Notepad2 } from '@react95/icons'
+import Draggable from 'react-draggable'
+import { useAppStore } from '@/lib/store'
+import { Window } from '@/types/Window'
+import { useThree } from '@react-three/fiber'
 
 interface MyComputerWindowProps {
-  position: [number, number, number];
-  zIndex: number;
-  onClose: () => void;
-  onMinimize: () => void;
-  onMaximize: () => void;
-  scale: number;
-  onPositionChange?: (x: number, y: number) => void;
-  camera: Camera;
-  size: { width: number; height: number };
-  onCreateTextWindow: (title: string, content: string, readOnly?: boolean) => void;
-  updateCursorStyle: (style: string) => void;
+  window: Window
 }
 
-const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
-  position,
-  zIndex,
-  onClose,
-  onMinimize,
-  onMaximize,
-  scale,
-  onPositionChange,
-  camera,
-  size,
-  onCreateTextWindow,
-}) => {
-  const [currentPath, setCurrentPath] = useState('C:\\');
-  const baseWidth = 500;
-  const baseHeight = 300;
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+const MyComputerWindow: React.FC<MyComputerWindowProps> = ({ window }) => {
+  const [currentPath] = useState('C:\\')
+  const { updateWindow, removeWindow, addWindow, windows } = useAppStore()
+  const { size } = useThree()
 
-  const handleTitleBarMouseDown = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    setIsDragging(true);
-    const worldPosition = new THREE.Vector3(position[0], position[1], 0);
-    const screenPosition = worldPosition.project(camera);
-    const x = (screenPosition.x + 1) * size.width / 2;
-    const y = (-screenPosition.y + 1) * size.height / 2;
-    setDragStart({ x: event.clientX - x, y: event.clientY - y });
-  }, [camera, position, size]);
+  const handleDrag = useCallback((_e: any, data: { x: number; y: number }) => {
+    const newX = data.x / size.width
+    const newY = data.y / size.height
+    updateWindow(window.id, { position: { x: newX, y: newY } })
+  }, [updateWindow, window.id, size])
 
-  const handleMouseMove = useCallback((event: MouseEvent) => {
-    if (isDragging && onPositionChange) {
-      event.preventDefault();
-      const x = (event.clientX - dragStart.x) / size.width * 2 - 1;
-      const y = -(event.clientY - dragStart.y) / size.height * 2 + 1;
-      const vector = new THREE.Vector3(x, y, 0).unproject(camera);
-      onPositionChange(vector.x, vector.y);
+  const openFile = (title: string, content: string) => {
+    const existingWindow = windows.find(w => w.title === title && w.type === 'text')
+    if (existingWindow) {
+      // Bring the existing window to the front
+      updateWindow(existingWindow.id, { zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 })
+    } else {
+      addWindow({
+        title,
+        content,
+        isReadOnly: true,
+        type: 'text',
+      })
     }
-  }, [isDragging, dragStart, onPositionChange, camera, size]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  React.useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }
 
   const handleOpenAboutFile = () => {
-    const aboutTxtContent = [
-      
-      "Made with ❤️ by [Martin](https://x.com/mrtincss)"
-    ];
-    onCreateTextWindow('About.txt', aboutTxtContent.join('\n'), true);
-  };
+    const aboutTxtContent = "Made with ❤️ by [Martin](https://x.com/mrtincss)"
+    openFile('About.txt', aboutTxtContent)
+  }
 
   const handleOpenChangelogFile = () => {
     const changelogTxtContent = [
@@ -91,89 +53,51 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
       "",
       "**Roadmap**",
       "- Amiga music player",
-    ];
-    onCreateTextWindow('Changelog.txt', changelogTxtContent.join('\n'), true);
-  };
+    ].join('\n')
+    openFile('Changelog.txt', changelogTxtContent)
+  }
 
   return (
-    <group position={position}>
-      <Html
-        transform
-        scale={scale}
-        zIndexRange={[zIndex + 2, zIndex + 2]}
-        style={{
-          width: `${baseWidth}px`,
-          height: `${baseHeight}px`,
-        }}
+    <Html>
+      <Draggable
+        position={{x: window.position.x * size.width, y: window.position.y * size.height}}
+        onDrag={handleDrag}
       >
-        <div 
-          className="window"
-          style={{
-            width: '100%',
-            height: '100%',
-            transform: `scale(${1 / scale})`,
-            transformOrigin: 'top left',
-            backgroundColor: '#D4D0C8',
-          }}
-        >
-          <div className="title-bar" onMouseDown={handleTitleBarMouseDown} style={{cursor: 'move'}}>
-            <span className="title-bar-text">My Computer</span>
+        <div className="window" style={{
+          width: `${window.size.width * size.width}px`,
+          height: `${window.size.height * size.height}px`,
+          position: 'absolute',
+          zIndex: window.zIndex,
+        }}>
+          <div className="title-bar">
+            <div className="title-bar-text">My Computer</div>
             <div className="title-bar-controls">
-              <button aria-label="Minimize" onClick={onMinimize}></button>
-              <button aria-label="Maximize" onClick={onMaximize}></button>
-              <button aria-label="Close" onClick={onClose}></button>
+              <button aria-label="Minimize"></button>
+              <button aria-label="Maximize"></button>
+              <button aria-label="Close" onClick={() => removeWindow(window.id)}></button>
             </div>
           </div>
-
-          <div className="window-body" style={{
-            height: 'calc(100% - 2rem)',
-            padding: '1rem',
-            overflow: 'auto',
-            backgroundColor: 'white',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(6rem, 1fr))',
-            gap: '1rem',
-            alignItems: 'start',
-          }}>
-            <div className="bg-gray-100 p-1 border-b border-gray-400">
-              <div className="flex items-center">
-                <span className="text-xs mr-2">Address:</span>
-                <input 
-                  type="text" 
-                  value={currentPath}
-                  onChange={(e) => setCurrentPath(e.target.value)}
-                  className="flex-grow text-xs p-1"
-                />
-              </div>
-            </div>
-
-            <div className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-              <div className="p-2 bg-white flex flex-col items-center">
-                <Wmsui323920 className="w-6 h-6" />
-                <span className="text-sm mt-1">My Folder</span>
-              </div>
-              <div className="p-2 bg-white flex flex-col items-center">
-                <Notepad2 
-                  className="w-6 h-6 cursor-pointer" 
-                  onClick={handleOpenAboutFile}
-                />
-                <span className="text-sm mt-1">About.txt</span>
-              </div>
-              <div className="p-2 bg-white flex flex-col items-center">
-                <Notepad2 
-                  className="w-6 h-6 cursor-pointer" 
-                  onClick={handleOpenChangelogFile}
-                />
-                <span className="text-sm mt-1">Changelog.txt</span>
-              </div>
-            </div>
-
-            
+          <div className="window-body">
+            <p>Current path: {currentPath}</p>
+            <ul className="tree-view">
+              <li>
+                <Wmsui323920 style={{marginRight: '5px'}} />
+                My Folder
+              </li>
+              <li>
+                <Notepad2 style={{marginRight: '5px'}} onClick={handleOpenAboutFile} />
+                About.txt
+              </li>
+              <li>
+                <Notepad2 style={{marginRight: '5px'}} onClick={handleOpenChangelogFile} />
+                Changelog.txt
+              </li>
+            </ul>
           </div>
         </div>
-      </Html>
-    </group>
-  );
-};
+      </Draggable>
+    </Html>
+  )
+}
 
-export default MyComputerWindow;
+export default MyComputerWindow

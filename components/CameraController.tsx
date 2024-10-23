@@ -1,93 +1,63 @@
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useState } from 'react'
 import { useThree } from '@react-three/fiber'
+import { useAppStore } from '@/lib/store'
 
-interface CameraControllerProps {
-  cameraPosition: { x: number; y: number }
-  setCameraPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
-  cameraZoom: number
-  setCameraZoom: React.Dispatch<React.SetStateAction<number>>
-  isPanning: boolean
-  setIsPanning: React.Dispatch<React.SetStateAction<boolean>>
-  updateCursorStyle: (style: string) => void
-}
-
-const CameraController: React.FC<CameraControllerProps> = ({
-  cameraPosition,
-  setCameraPosition,
-  cameraZoom,
-  setCameraZoom,
-  isPanning,
-  setIsPanning,
-  updateCursorStyle,
-}) => {
+const CameraController: React.FC = () => {
   const { camera, gl } = useThree()
-  const lastMousePosition = useRef({ x: 0, y: 0 })
+  const { position, scale, setPosition, setScale } = useAppStore()
+  const [isDragging, setIsDragging] = useState(false)
+  const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 })
 
   const handleMouseDown = useCallback((event: MouseEvent) => {
-    const target = event.target as HTMLElement
-    if (target === gl.domElement) {
-      setIsPanning(true)
-      lastMousePosition.current = { x: event.clientX, y: event.clientY }
-      updateCursorStyle('grab')
+    if (event.button === 1 || (event.button === 0 && event.altKey)) {
+      setIsDragging(true)
+      setLastMousePosition({ x: event.clientX, y: event.clientY })
     }
-  }, [gl.domElement, setIsPanning, updateCursorStyle])
+  }, [])
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
-    if (isPanning) {
-      const deltaX = event.clientX - lastMousePosition.current.x
-      const deltaY = event.clientY - lastMousePosition.current.y
-      setCameraPosition(prev => ({
-        x: prev.x - deltaX / (cameraZoom * 50),
-        y: prev.y + deltaY / (cameraZoom * 50)
-      }))
-      lastMousePosition.current = { x: event.clientX, y: event.clientY }
+    if (isDragging) {
+      const deltaX = event.clientX - lastMousePosition.x
+      const deltaY = event.clientY - lastMousePosition.y
+      setPosition({
+        x: position.x - deltaX / (scale * 50),
+        y: position.y + deltaY / (scale * 50)
+      })
+      setLastMousePosition({ x: event.clientX, y: event.clientY })
     }
-  }, [isPanning, cameraZoom, setCameraPosition])
+  }, [isDragging, lastMousePosition, position, scale, setPosition])
 
   const handleMouseUp = useCallback(() => {
-    if (isPanning) {
-      setIsPanning(false)
-      updateCursorStyle('default')
-    }
-  }, [isPanning, setIsPanning, updateCursorStyle])
-
-  const handleMouseLeave = useCallback(() => {
-    if (isPanning) {
-      setIsPanning(false)
-      updateCursorStyle('default')
-    }
-  }, [isPanning, setIsPanning, updateCursorStyle])
+    setIsDragging(false)
+  }, [])
 
   const handleWheel = useCallback((event: WheelEvent) => {
     event.preventDefault()
     const zoomSpeed = 0.1
-    const delta = event.deltaY > 0 ? 1 - zoomSpeed : 1 + zoomSpeed
-    setCameraZoom(prev => Math.max(0.1, Math.min(10, prev * delta)))
-  }, [setCameraZoom])
+    const newScale = Math.max(0.1, scale + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed))
+    setScale(newScale)
+  }, [scale, setScale])
 
   useEffect(() => {
-    const canvas = gl.domElement
-    canvas.addEventListener('mousedown', handleMouseDown)
+    gl.domElement.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
-    canvas.addEventListener('mouseleave', handleMouseLeave)
-    canvas.addEventListener('wheel', handleWheel, { passive: false })
+    gl.domElement.addEventListener('wheel', handleWheel, { passive: false })
 
     return () => {
-      canvas.removeEventListener('mousedown', handleMouseDown)
+      gl.domElement.removeEventListener('mousedown', handleMouseDown)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
-      canvas.removeEventListener('mouseleave', handleMouseLeave)
-      canvas.removeEventListener('wheel', handleWheel)
+      gl.domElement.removeEventListener('wheel', handleWheel)
     }
-  }, [gl.domElement, handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave, handleWheel])
+  }, [gl.domElement, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel])
 
   useEffect(() => {
-    camera.position.x = cameraPosition.x
-    camera.position.y = cameraPosition.y
-    camera.zoom = 50 * cameraZoom
+    camera.position.x = position.x
+    camera.position.y = position.y
+    camera.zoom = 50 * scale
     camera.updateProjectionMatrix()
-  }, [camera, cameraPosition, cameraZoom])
+  }, [camera, position, scale])
 
   return null
 }
