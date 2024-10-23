@@ -3,11 +3,11 @@ import { Canvas, useThree } from '@react-three/fiber'
 import TextWindow from '@/components/TextWindow'
 import Panel from '@/components/Panel'
 import CameraController from '@/components/CameraController'
-//import WindowsContainer from './WindowsContainer'
 import styles from './whiteboard.module.css';
 import MyComputerWindow from '@/components/MyComputerWindow'
 import { Computer } from '@react95/icons';
 import ReadOnlyWindow from '@/components/ReadOnlyWindow'
+import { Html } from '@react-three/drei'
 
 
 interface Window {
@@ -55,7 +55,7 @@ function Scene({
   computerPosition,
   onPositionChange,
   closeComputerWindow,
-  createTextWindow
+  createTextWindow,
 }: SceneProps) {
   const { camera, size } = useThree()
   
@@ -142,8 +142,6 @@ const Whiteboard: React.FC = () => {
   const [cursorStyle, setCursorStyle] = useState('default')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [colorBackground, setColorBackground] = useState(false)
-  const [disableAnimation, setDisableAnimation] = useState(false)
-  const [cloudBackground, setCloudBackground] = useState(false)
   const [isComputerOpen, setIsComputerOpen] = useState(false)
   const [myComputerPosition, setMyComputerPosition] = useState<[number, number, number]>([0, 0, 0])
 
@@ -245,14 +243,6 @@ const Whiteboard: React.FC = () => {
     setCursorStyle(style);
   }, []);
 
-  const toggleCloudBackground = useCallback(() => {
-    setCloudBackground(prev => !prev)
-  }, [])
-
-  const toggleCloudAnimation = useCallback(() => {
-    setDisableAnimation(prev => !prev)
-  }, [])
-
   const toggleColorBackground = useCallback(() => {
     setColorBackground(prev => !prev)
   }, [])
@@ -296,13 +286,10 @@ const Whiteboard: React.FC = () => {
       {colorBackground ? (
         <div className={styles.colorBackground} aria-hidden="true" />
       ) : (
-        <div 
-          className={`${styles.cloudBackground} ${!disableAnimation ? styles.animated : ''}`} 
-          aria-hidden="true"
-        />
+        <div className={styles.cloudBackground} aria-hidden="true" />
       )}
 
-      {/* Regular DOM elements outside Canvas */}
+      {/* Panel - Update the props passed to Panel */}
       <div className="absolute left-4 top-4 z-50">
         <Panel
           windowCount={windows.length}
@@ -313,20 +300,11 @@ const Whiteboard: React.FC = () => {
           onResetView={resetView}
           colorBackground={colorBackground}
           toggleColorBackground={toggleColorBackground}
-          disableAnimation={disableAnimation}
-          toggleCloudAnimation={toggleCloudAnimation}
-          cloudBackground={cloudBackground}
-          toggleCloudBackground={toggleCloudBackground}
           updateCursorStyle={updateCursorStyle}
+          createTextWindow={createReadOnlyWindow}
+          size={canvasSize}
+          openComputerWindow={openComputerWindow} // Pass this prop
         />
-      </div>
-
-      <div
-        className="absolute left-0 top-0 transform -translate-y-1/2 flex flex-col items-center gap-1 hover:underline hover:underline-offset-4 cursor-pointer z-50"
-        onClick={openComputerWindow}
-      >
-        <Computer className="w-6 h-6" />
-        <span>My Computer</span>
       </div>
 
       {/* R3F Canvas */}
@@ -364,6 +342,8 @@ const Whiteboard: React.FC = () => {
           createTextWindow={createReadOnlyWindow}
         />
       </Canvas>
+
+      {/* Remove the My Computer icon from here */}
     </main>
   );
 };

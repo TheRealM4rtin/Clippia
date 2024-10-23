@@ -126,19 +126,16 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
             </div>
           </div>
 
-          <div 
-            className="window-body"
-            style={{
-              height: 'calc(100% - 2rem)',
-              padding: '1rem',
-              overflow: 'auto',
-              backgroundColor: 'white',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(6rem, 1fr))',
-              gap: '1rem',
-              alignItems: 'start',
-            }}
-          >
+          <div className="window-body" style={{
+            height: 'calc(100% - 2rem)',
+            padding: '1rem',
+            overflow: 'auto',
+            backgroundColor: 'white',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(6rem, 1fr))',
+            gap: '1rem',
+            alignItems: 'start',
+          }}>
             <div className="bg-gray-100 p-1 border-b border-gray-400">
               <div className="flex items-center">
                 <span className="text-xs mr-2">Address:</span>
@@ -152,24 +149,27 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
             </div>
 
             <div className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-              <div className="flex-grow p-2 overflow-auto bg-white">
-                  <Wmsui323920 className="w-6 h-6" />
-                  My Folder
+              <div className="p-2 bg-white flex flex-col items-center">
+                <Wmsui323920 className="w-6 h-6" />
+                <span className="text-sm mt-1">My Folder</span>
               </div>
-
-              <div className="flex-grow p-2 overflow-auto bg-white" onClick={handleOpenAboutFile}>
-  
-                  <Notepad2 className="w-6 h-6" />
-                  About.txt
+              <div className="p-2 bg-white flex flex-col items-center">
+                <Notepad2 
+                  className="w-6 h-6 cursor-pointer" 
+                  onClick={handleOpenAboutFile}
+                />
+                <span className="text-sm mt-1">About.txt</span>
               </div>
-
-              <div className="flex-grow p-2 overflow-auto bg-white flex items-center" onClick={handleOpenChangelogFile}>
-                  <Notepad2 className="w-6 h-6 mr-2" />
-                  Changelog.txt
+              <div className="p-2 bg-white flex flex-col items-center">
+                <Notepad2 
+                  className="w-6 h-6 cursor-pointer" 
+                  onClick={handleOpenChangelogFile}
+                />
+                <span className="text-sm mt-1">Changelog.txt</span>
               </div>
-              
-
             </div>
+
+            
           </div>
         </div>
       </Html>

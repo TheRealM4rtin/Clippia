@@ -1,11 +1,13 @@
-import React, { useState } from 'react'
-import Feedback from '@/components/Feedback'
+import React, { useState, useCallback, useEffect } from 'react'
+import Feedback from '@/components/tabs/Feedback'
 import MenuTab from '@/components/tabs/MenuTab'
 import LoginTab from '@/components/tabs/LoginTab'
-import MyComputerWindow from './MyComputerWindow'
+import styles from './Panel.module.css'
+
+import { Bookmark, Explore } from '@react95/icons';
+import * as THREE from 'three';
 
 import { Button } from '@react95/core';
-import { Bookmark, Computer, Explore } from '@react95/icons';
 
 interface PanelProps {
   windowCount: number
@@ -14,54 +16,34 @@ interface PanelProps {
   scale: number
   onAddWindow: () => void
   onResetView: () => void
-  cloudBackground: boolean
-  toggleCloudBackground: () => void
-  disableAnimation: boolean
-  toggleCloudAnimation: () => void
   colorBackground: boolean
   toggleColorBackground: () => void
+  updateCursorStyle: (style: string) => void
+  createTextWindow: (title: string, content: string, readOnly?: boolean) => void
+  camera?: THREE.Camera;
+  size: { width: number; height: number };
+  openComputerWindow: () => void;
 }
 
 const Panel: React.FC<PanelProps> = ({ 
   windowCount, x, y, scale, onAddWindow, onResetView,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  cloudBackground,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  toggleCloudBackground,
-  disableAnimation,
-  toggleCloudAnimation,
-  colorBackground,
-  toggleColorBackground
+  colorBackground, toggleColorBackground,
+  updateCursorStyle, createTextWindow, camera, size,
+  openComputerWindow
 }) => {
   const [activeTab, setActiveTab] = useState('menu');
+  const [panelWidth, setPanelWidth] = useState(250);
 
-  const tabStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: '1px 7px',
-    cursor: 'pointer',
-    backgroundColor: isActive ? 'white' : '#D4D0C8',
-    border: '1px solid #0054E3',
-    borderBottom: isActive ? 'none' : '1px solid #0054E3',
-    borderTopLeftRadius: '3px',
-    borderTopRightRadius: '3px',
-    marginRight: '-1px',
-    position: 'relative',
-    top: isActive ? '1px' : '0',
-    zIndex: isActive ? 2 : 1,
-    fontFamily: '"Pixelated MS Sans Serif", Arial',
-    fontSize: '11px',
-    fontWeight: 'normal',
-    color: 'black',
-  });
-
-  const panelStyle: React.CSSProperties = {
-    fontFamily: '"Pixelated MS Sans Serif", Arial',
-    width: '250px',
-    boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.2)',
-    backgroundColor: '#D4D0C8',
-    borderBottom: '1px solid #0054E3',
-    pointerEvents: 'auto',  // Correctly typed as a string
-    zIndex: 1000,  // Correctly typed as a number
-  };
+  useEffect(() => {
+    const handleResize = () => {
+      setPanelWidth(Math.min(window.innerWidth * 0.9, 250));
+    };
+    
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -75,75 +57,40 @@ const Panel: React.FC<PanelProps> = ({
           onResetView={onResetView}
           colorBackground={colorBackground}
           toggleColorBackground={toggleColorBackground}
-          disableAnimation={disableAnimation}
-          toggleCloudAnimation={toggleCloudAnimation}
+          openComputerWindow={openComputerWindow}
+          width={panelWidth}
         />;
       case 'feedback':
-        return <Feedback />;
+        return <Feedback width={panelWidth} />;
       case 'login':
-        return <LoginTab />;
+        return <LoginTab width={panelWidth} />;
       default:
         return null;
     }
   };
 
   const handleTabClick = (tab: string) => (event: React.MouseEvent) => {
-    console.log(`Tab ${tab} clicked`);  // Debugging line
     event.preventDefault();
     setActiveTab(tab);
   };
 
   return (
-    <>
-    <div className="panel" style={panelStyle}>
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
+    <div className={styles.panel} style={{ width: panelWidth }}>
+      <div className={styles.tabContainer}>
         {['menu', 'feedback', 'login'].map((tab) => (
           <div 
             key={tab}
-            style={tabStyle(activeTab === tab)}
+            className={`${styles.tab} ${activeTab === tab ? styles.activeTab : ''}`}
             onClick={handleTabClick(tab)}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </div>
         ))}
       </div>
-      <div style={{
-        backgroundColor: 'white',
-        border: '1px solid #0054E3',
-        padding: '6px',
-        fontSize: '11px',
-        color: 'black',
-      }}>
+      <div className={styles.tabContent}>
         {renderActiveTab()}
       </div>
-
     </div>
-
-    {/* <div
-      className="absolute left-0 top-1/2 transform -translate-y-1/2 flex flex-col items-center gap-1 hover:underline hover:underline-offset-4"
-      onClick={handleComputerIconClick}
-    >
-      <Computer className="w-6 h-6" />
-      <span>My Computer</span>
-    </div>
-
-    {isMyComputerOpen && (
-      <MyComputerWindow
-        position={[0, 0, 0]}
-        zIndex={1000}
-        onClose={handleCloseMyComputer}
-        onMinimize={() => {}}
-        onMaximize={() => {}}
-        scale={1}
-        width={300}
-        height={200}
-      />
-    )} */}
-
-    </>
-    
-    
-
   );
 };
 

@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import styles from './LoginTab.module.css';
 // import ButtonPanel from '@/components/ButtonPanel';
 import { loadStripe } from '@stripe/stripe-js';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-const LoginTab: React.FC = () => {
+interface LoginTabProps {
+  width: number;
+}
+
+const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -71,42 +76,32 @@ const LoginTab: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="field-row-stacked" style={{ width: '200px' }}>
-        <label htmlFor="text22">Email</label>
+    <div className={styles.loginTab} style={{ width: width - 12 }}>
+      <div className={styles.inputGroup}>
+        <label htmlFor="email">Email</label>
         <input
-          id="text22"
+          id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
-      <div className="field-row-stacked" style={{ width: '200px' }}>
-        <label htmlFor="text23">Password</label>
+      <div className={styles.inputGroup}>
+        <label htmlFor="password">Password</label>
         <input
-          id="text23"
+          id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
 
-
-      <div>
+      <div className={styles.buttonGroup}>
         <button disabled>Login (soon)</button>
       </div>
 
-      {/* <ButtonPanel>
-        <ButtonPanel.Button onClick={handleLogin}>
-          Login
-        </ButtonPanel.Button>
-        <ButtonPanel.Button onClick={handleSubscribe}>
-          Take a sub
-        </ButtonPanel.Button>
-      </ButtonPanel> */}
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <strong style={{ color: 'purple' }}>✨Take a sub and access premium features ✨</strong>
+      {error && <p className={styles.error}>{error}</p>}
+      <strong className={styles.subscriptionMessage}>✨Take a sub and access premium features ✨</strong>
     </div>
   );
 };
