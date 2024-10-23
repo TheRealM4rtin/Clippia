@@ -60,3 +60,12 @@ canvas {
 }
 
 /* Add any other global styles you need */
+
+/* Add this at the end of your existing CSS */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .window-body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

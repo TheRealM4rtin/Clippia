@@ -27,7 +27,6 @@ interface ReadOnlyWindowProps {
 const ReadOnlyWindow: React.FC<ReadOnlyWindowProps> = ({
   title,
   content,
-  isReadOnly,
   position,
   onPositionChange,
   scale,

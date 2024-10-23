@@ -1,13 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import TextWindow from '@/components/TextWindow'
 import Panel from '@/components/Panel'
 import CameraController from '@/components/CameraController'
 import styles from './whiteboard.module.css';
 import MyComputerWindow from '@/components/MyComputerWindow'
-import { Computer } from '@react95/icons';
 import ReadOnlyWindow from '@/components/ReadOnlyWindow'
-import { Html } from '@react-three/drei'
+import logger from '@/lib/logger';
 
 
 interface Window {
@@ -64,6 +63,7 @@ function Scene({
     camera.position.y = cameraPosition.y
     camera.zoom = 50 * cameraZoom
     camera.updateProjectionMatrix()
+    logger.info('Camera updated', { position: cameraPosition, zoom: cameraZoom });
   }, [camera, cameraPosition, cameraZoom])
 
   return (
@@ -79,7 +79,7 @@ function Scene({
             isReadOnly={window.isReadOnly}
             position={[window.x, window.y, 0]}
             onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
-            scale={1 / cameraZoom}
+            scale={cameraZoom}
             camera={camera}
             size={size}
             onResize={(width, height) => updateWindowSize(window.id, width, height)}
@@ -101,7 +101,7 @@ function Scene({
             onTextChange={(text) => updateWindowText(window.id, text)}
             onTitleChange={(title) => updateWindowTitle(window.id, title)}
             onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
-            scale={1 / cameraZoom}
+            scale={cameraZoom}
             creationTime={window.creationTime}
             onResize={(width, height) => updateWindowSize(window.id, width, height)}
             width={window.width}
@@ -134,11 +134,10 @@ function Scene({
 }
 
 const Whiteboard: React.FC = () => {
-  const [windows, setWindows] = useState<Window[]>([])
+  const [windows, setWindows] = useState<Map<number, Window>>(new Map());
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 })
   const [cameraZoom, setCameraZoom] = useState(1)
   const [isPanning, setIsPanning] = useState(false)
-  const canvasRef = useRef<HTMLDivElement>(null)
   const [cursorStyle, setCursorStyle] = useState('default')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [colorBackground, setColorBackground] = useState(false)
@@ -151,6 +150,7 @@ const Whiteboard: React.FC = () => {
         width: window.innerWidth,
         height: window.innerHeight
       });
+      logger.info('Canvas size updated', { width: window.innerWidth, height: window.innerHeight });
     };
     window.addEventListener('resize', updateSize);
     updateSize();
@@ -164,8 +164,8 @@ const Whiteboard: React.FC = () => {
 
     let newX: number, newY: number
 
-    if (windows.length > 0) {
-      const lastWindow = windows[windows.length - 1]
+    if (windows.size > 0) {
+      const lastWindow = Array.from(windows.values())[windows.size - 1]
       
       const viewLeft = cameraPosition.x - (defaultWidth / 2) / (cameraZoom * 50)
       const viewRight = cameraPosition.x + (defaultWidth / 2) / (cameraZoom * 50)
@@ -194,69 +194,97 @@ const Whiteboard: React.FC = () => {
       text: 'Type here to start...', 
       x: newX,
       y: newY,
-      zIndex: windows.length,
+      zIndex: windows.size,
       creationTime: new Date(),
       width: defaultWidth,
       height: defaultHeight,
       isNew: true,
       isReadOnly: false // Ensure this is set to false for new editable windows
     }
-    setWindows(prevWindows => [...prevWindows, newWindow])
-  }, [cameraPosition, cameraZoom, windows])
+    setWindows(prevWindows => {
+      const newWindows = new Map(prevWindows);
+      newWindows.set(newWindow.id, newWindow);
+      logger.info('New window added', { windowId: newWindow.id, title: newWindow.title });
+      return newWindows;
+    });
+  }, [cameraPosition, cameraZoom]);
 
   const removeWindow = useCallback((id: number) => {
-    setWindows(prevWindows => prevWindows.filter(window => window.id !== id))
-  }, [])
+    setWindows(prevWindows => {
+      const newWindows = new Map(prevWindows);
+      newWindows.delete(id);
+      logger.info('Window removed', { windowId: id });
+      return newWindows;
+    });
+  }, []);
 
   const updateWindowText = useCallback((id: number, text: string) => {
-    setWindows(prevWindows => prevWindows.map(window => 
-      window.id === id ? { ...window, text } : window
-    ))
-  }, [])
+    setWindows(prevWindows => {
+      const newWindows = new Map(prevWindows);
+      newWindows.set(id, { ...prevWindows.get(id)!, text });
+      logger.debug('Window text updated', { windowId: id });
+      return newWindows;
+    });
+  }, []);
 
   const updateWindowTitle = useCallback((id: number, title: string) => {
-    setWindows(prevWindows => prevWindows.map(window => 
-      window.id === id ? { ...window, title } : window
-    ))
-  }, [])
+    setWindows(prevWindows => {
+      const newWindows = new Map(prevWindows);
+      newWindows.set(id, { ...prevWindows.get(id)!, title });
+      logger.debug('Window title updated', { windowId: id, newTitle: title });
+      return newWindows;
+    });
+  }, []);
 
   const updateWindowPosition = useCallback((id: number, newX: number, newY: number) => {
-    setWindows(prevWindows => prevWindows.map(window => 
-      window.id === id ? { ...window, x: newX, y: newY } : window
-    ))
-  }, [])
+    setWindows(prevWindows => {
+      const newWindows = new Map(prevWindows);
+      newWindows.set(id, { ...prevWindows.get(id)!, x: newX, y: newY });
+      logger.debug('Window position updated', { windowId: id, newPosition: { x: newX, y: newY } });
+      return newWindows;
+    });
+  }, []);
 
   const updateWindowSize = useCallback((id: number, width: number, height: number) => {
-    setWindows(prevWindows =>
-      prevWindows.map(window =>
-        window.id === id ? { ...window, width, height } : window
-      )
-    )
-  }, [])
+    setWindows(prevWindows => {
+      const newWindows = new Map(prevWindows);
+      newWindows.set(id, { ...prevWindows.get(id)!, width, height });
+      logger.debug('Window size updated', { windowId: id, newSize: { width, height } });
+      return newWindows;
+    });
+  }, []);
 
   const resetView = useCallback(() => {
     setCameraPosition({ x: 0, y: 0 })
     setCameraZoom(1)
-  }, [])
+    logger.info('View reset');
+  }, []);
 
   const updateCursorStyle = useCallback((style: string) => {
     setCursorStyle(style);
   }, []);
 
   const toggleColorBackground = useCallback(() => {
-    setColorBackground(prev => !prev)
-  }, [])
+    setColorBackground(prev => {
+      const newValue = !prev;
+      logger.info('Background color toggled', { newValue });
+      return newValue;
+    });
+  }, []);
 
   const openComputerWindow = () => {
     setIsComputerOpen(true);
+    logger.info('Computer window opened');
   };
 
   const closeComputerWindow = () => {
     setIsComputerOpen(false);
+    logger.info('Computer window closed');
   };
 
   const handleMyComputerPosition = useCallback((x: number, y: number) => {
     setMyComputerPosition([x, y, 0]);
+    logger.debug('My Computer position updated', { newPosition: { x, y } });
   }, []);
 
   const createReadOnlyWindow = useCallback((title: string, content: string) => {
@@ -277,11 +305,16 @@ const Whiteboard: React.FC = () => {
       isNew: false,
       isReadOnly: true // Ensure this is set to true for read-only windows
     };
-    setWindows(prevWindows => [...prevWindows, newWindow]);
-  }, [cameraPosition, cameraZoom, windows.length]);
+    setWindows(prevWindows => {
+      const newWindows = new Map(prevWindows);
+      newWindows.set(newWindow.id, newWindow);
+      logger.info('Read-only window created', { windowId: newWindow.id, title: newWindow.title });
+      return newWindows;
+    });
+  }, [cameraPosition, cameraZoom]);
 
   return (
-    <main className={styles.whiteboard}>
+    <main className={styles.whiteboard} style={{ cursor: cursorStyle }}>
       {/* Background */}
       {colorBackground ? (
         <div className={styles.colorBackground} aria-hidden="true" />
@@ -292,7 +325,7 @@ const Whiteboard: React.FC = () => {
       {/* Panel - Update the props passed to Panel */}
       <div className="absolute left-4 top-4 z-50">
         <Panel
-          windowCount={windows.length}
+          windowCount={windows.size}
           x={cameraPosition.x}
           y={cameraPosition.y}
           scale={cameraZoom}
@@ -326,7 +359,7 @@ const Whiteboard: React.FC = () => {
         />
         
         <Scene
-          windows={windows}
+          windows={Array.from(windows.values())}
           updateWindowPosition={updateWindowPosition}
           removeWindow={removeWindow}
           updateWindowText={updateWindowText}

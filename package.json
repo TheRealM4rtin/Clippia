@@ -23,8 +23,11 @@
     "@vercel/analytics": "^1.3.1",
     "98.css": "^0.1.20",
     "date-fns": "^4.1.0",
+    "dompurify": "^3.1.7",
     "framer-motion": "^11.11.9",
+    "fs": "^0.0.1-security",
     "html2canvas": "^1.4.1",
+    "isomorphic-dompurify": "^2.16.0",
     "lucide-react": "^0.453.0",
     "next": "14.2.15",
     "react": "^18",
@@ -37,6 +40,7 @@
     "three": "^0.169.0",
     "tiptap-markdown": "^0.8.10",
     "use-gesture": "^1.0.0",
+    "winston": "^3.15.0",
     "xp.css": "^0.2.6"
   },
   "devDependencies": {

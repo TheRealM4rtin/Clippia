@@ -29,7 +29,6 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
   camera,
   size,
   onCreateTextWindow,
-  updateCursorStyle
 }) => {
   const [currentPath, setCurrentPath] = useState('C:\\');
   const baseWidth = 500;

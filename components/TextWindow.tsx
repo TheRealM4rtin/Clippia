@@ -8,11 +8,10 @@ import { Markdown } from 'tiptap-markdown'
 import BulletList from '@tiptap/extension-bullet-list'
 import ListItem from '@tiptap/extension-list-item'  
 import Placeholder from '@tiptap/extension-placeholder'
-// import ExportButton from '@/components/ExportButton'
 import html2canvas from 'html2canvas'
+import DOMPurify from 'isomorphic-dompurify';
 
 import '@/app/tiptap.css'
-//import '@/app/windows98.css' // Add this new import for Windows 98 styles
 import "xp.css/dist/98.css";
 import '@/components/style.scss'
 
@@ -39,6 +38,11 @@ interface TextWindowProps {
   isNew?: boolean
 }
 
+/**
+ * TextWindow component for displaying editable text content.
+ * @param {TextWindowProps} props - The props for the TextWindow component.
+ * @returns {React.ReactElement} The rendered TextWindow component.
+ */
 const TextWindow: React.FC<TextWindowProps> = (props) => {
   const {
     // eslint-disable-next-line
@@ -159,11 +163,20 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
     setInitialSize({ width, height })
   }, [width, height])
 
+  const sanitizeInput = (input: string): string => {
+    return DOMPurify.sanitize(input);
+  };
+
   const handleTitleChange = useCallback((event: React.FocusEvent<HTMLSpanElement>) => {
-    const newTitle = event.target.textContent || 'Untitled'
-    setTitle(newTitle)
-    onTitleChange(newTitle)
-  }, [onTitleChange])
+    const newTitle = sanitizeInput(event.target.textContent?.trim() || 'Untitled');
+    if (newTitle.length > 50) {
+      console.warn('Title too long, truncating');
+      setTitle(newTitle.slice(0, 50));
+    } else {
+      setTitle(newTitle);
+    }
+    onTitleChange(newTitle);
+  }, [onTitleChange]);
 
   const formattedCreationTime = format(creationTime, 'MMM d, yyyy HH:mm:ss')
 
@@ -192,6 +205,18 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
       }
     }
   }, [editor, handleEditorFocus, handleEditorBlur])
+
+  const updateTextScale = useCallback(() => {
+    if (windowRef.current) {
+      const scaleFactor = 1 / scale;
+      windowRef.current.style.transform = `scale(${scaleFactor})`;
+      windowRef.current.style.transformOrigin = 'top left';
+    }
+  }, [scale]);
+
+  useEffect(() => {
+    updateTextScale();
+  }, [scale, updateTextScale]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleExport = useCallback(async () => {
@@ -240,7 +265,7 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
     <group position={position}>
       <Html
         transform
-        scale={scale}
+        occlude
         zIndexRange={[zIndex + 2, zIndex + 2]}
         style={{
           width: `${width}px`,
@@ -254,11 +279,6 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
             width: '100%', 
             height: '100%', 
             overflow: 'hidden',
-            transform: `scale(${1 / scale})`,
-            transformOrigin: 'top left',
-            zIndex: zIndex + 2,
-            display: 'flex',
-            flexDirection: 'column',
             position: 'relative',
           }}
           onMouseEnter={() => updateCursorStyle('default')}
@@ -292,10 +312,21 @@ const TextWindow: React.FC<TextWindowProps> = (props) => {
 
 
 
-          <div className="window-body" style={{ flex: 1, padding: '5px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div className="window-body" style={{ 
+            flex: 1, 
+            padding: '5px', 
+            overflow: 'hidden', 
+            display: 'flex', 
+            flexDirection: 'column',
+          }}>
             <EditorContent 
               editor={editor} 
-              style={{ flex: 1, overflow: 'auto' }}
+              style={{ 
+                flex: 1, 
+                overflow: 'auto',
+                fontSize: `${16 / scale}px`, // Adjust font size based on scale
+                lineHeight: `${24 / scale}px`, // Adjust line height based on scale
+              }}
               onMouseEnter={() => updateCursorStyle('text')}
             />
           </div>

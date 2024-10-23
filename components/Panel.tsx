@@ -1,13 +1,9 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Feedback from '@/components/tabs/Feedback'
 import MenuTab from '@/components/tabs/MenuTab'
 import LoginTab from '@/components/tabs/LoginTab'
 import styles from './Panel.module.css'
-
-import { Bookmark, Explore } from '@react95/icons';
 import * as THREE from 'three';
-
-import { Button } from '@react95/core';
 
 interface PanelProps {
   windowCount: number
@@ -28,7 +24,6 @@ interface PanelProps {
 const Panel: React.FC<PanelProps> = ({ 
   windowCount, x, y, scale, onAddWindow, onResetView,
   colorBackground, toggleColorBackground,
-  updateCursorStyle, createTextWindow, camera, size,
   openComputerWindow
 }) => {
   const [activeTab, setActiveTab] = useState('menu');
