@@ -7,6 +7,7 @@ import CameraController from '@/components/CameraController'
 import styles from './whiteboard.module.css';
 import MyComputerWindow from '@/components/MyComputerWindow'
 import { Computer } from '@react95/icons';
+import ReadOnlyWindow from '@/components/ReadOnlyWindow'
 
 
 interface Window {
@@ -20,6 +21,7 @@ interface Window {
   width: number
   height: number
   isNew: boolean
+  isReadOnly: boolean
 }
 
 interface SceneProps {
@@ -36,6 +38,7 @@ interface SceneProps {
   computerPosition: [number, number, number]
   onPositionChange: (x: number, y: number) => void
   closeComputerWindow: () => void
+  createTextWindow: (title: string, content: string) => void
 }
 
 function Scene({ 
@@ -51,7 +54,8 @@ function Scene({
   isComputerOpen,
   computerPosition,
   onPositionChange,
-  closeComputerWindow
+  closeComputerWindow,
+  createTextWindow
 }: SceneProps) {
   const { camera, size } = useThree()
   
@@ -67,29 +71,47 @@ function Scene({
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
       {windows.map((window) => (
-        <TextWindow
-          key={window.id}
-          position={[window.x, window.y, 0]}
-          id={window.id}
-          initialTitle={window.title}
-          initialText={window.text}
-          zIndex={window.zIndex}
-          onClose={() => removeWindow(window.id)}
-          onMinimize={() => {}}
-          onMaximize={() => {}}
-          onTextChange={(text) => updateWindowText(window.id, text)}
-          onTitleChange={(title) => updateWindowTitle(window.id, title)}
-          onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
-          scale={1 / cameraZoom}
-          creationTime={window.creationTime}
-          onResize={(width, height) => updateWindowSize(window.id, width, height)}
-          width={window.width}
-          height={window.height}
-          camera={camera}
-          size={size} 
-          updateCursorStyle={updateCursorStyle}
-          isNew={window.isNew}
-        />
+        window.isReadOnly ? (
+          <ReadOnlyWindow
+            key={window.id}
+            title={window.title}
+            content={window.text}
+            isReadOnly={window.isReadOnly}
+            position={[window.x, window.y, 0]}
+            onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
+            scale={1 / cameraZoom}
+            camera={camera}
+            size={size}
+            onResize={(width, height) => updateWindowSize(window.id, width, height)}
+            width={window.width}
+            height={window.height}
+            onClose={() => removeWindow(window.id)}
+          />
+        ) : (
+          <TextWindow
+            key={window.id}
+            position={[window.x, window.y, 0]}
+            id={window.id}
+            initialTitle={window.title}
+            initialText={window.text}
+            zIndex={window.zIndex}
+            onClose={() => removeWindow(window.id)}
+            onMinimize={() => {}}
+            onMaximize={() => {}}
+            onTextChange={(text) => updateWindowText(window.id, text)}
+            onTitleChange={(title) => updateWindowTitle(window.id, title)}
+            onPositionChange={(newX, newY) => updateWindowPosition(window.id, newX, newY)}
+            scale={1 / cameraZoom}
+            creationTime={window.creationTime}
+            onResize={(width, height) => updateWindowSize(window.id, width, height)}
+            width={window.width}
+            height={window.height}
+            camera={camera}
+            size={size} 
+            updateCursorStyle={updateCursorStyle}
+            isNew={window.isNew}
+          />
+        )
       ))}
 
       {isComputerOpen && (
@@ -103,6 +125,8 @@ function Scene({
           onPositionChange={onPositionChange}
           camera={camera}
           size={size}
+          onCreateTextWindow={createTextWindow}
+          updateCursorStyle={updateCursorStyle}
         />
       )}
     </>
@@ -114,11 +138,8 @@ const Whiteboard: React.FC = () => {
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 })
   const [cameraZoom, setCameraZoom] = useState(1)
   const [isPanning, setIsPanning] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const canvasRef = useRef<HTMLDivElement>(null)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [cursorStyle, setCursorStyle] = useState('default')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [colorBackground, setColorBackground] = useState(false)
   const [disableAnimation, setDisableAnimation] = useState(false)
@@ -180,6 +201,7 @@ const Whiteboard: React.FC = () => {
       width: defaultWidth,
       height: defaultHeight,
       isNew: true,
+      isReadOnly: false // Ensure this is set to false for new editable windows
     }
     setWindows(prevWindows => [...prevWindows, newWindow])
   }, [cameraPosition, cameraZoom, windows])
@@ -247,6 +269,26 @@ const Whiteboard: React.FC = () => {
     setMyComputerPosition([x, y, 0]);
   }, []);
 
+  const createReadOnlyWindow = useCallback((title: string, content: string) => {
+    const defaultWidth = 400;
+    const defaultHeight = 320;
+    const offset = 2 / (cameraZoom * 50);
+  
+    const newWindow: Window = { 
+      id: Date.now(), 
+      title: title,
+      text: content, 
+      x: cameraPosition.x + offset,
+      y: cameraPosition.y - offset,
+      zIndex: 1001, // Set this higher than the MyComputerWindow zIndex
+      creationTime: new Date(),
+      width: defaultWidth,
+      height: defaultHeight,
+      isNew: false,
+      isReadOnly: true // Ensure this is set to true for read-only windows
+    };
+    setWindows(prevWindows => [...prevWindows, newWindow]);
+  }, [cameraPosition, cameraZoom, windows.length]);
 
   return (
     <main className={styles.whiteboard}>
@@ -275,6 +317,7 @@ const Whiteboard: React.FC = () => {
           toggleCloudAnimation={toggleCloudAnimation}
           cloudBackground={cloudBackground}
           toggleCloudBackground={toggleCloudBackground}
+          updateCursorStyle={updateCursorStyle}
         />
       </div>
 
@@ -318,6 +361,7 @@ const Whiteboard: React.FC = () => {
           computerPosition={myComputerPosition}
           onPositionChange={handleMyComputerPosition}
           closeComputerWindow={closeComputerWindow}
+          createTextWindow={createReadOnlyWindow}
         />
       </Canvas>
     </main>

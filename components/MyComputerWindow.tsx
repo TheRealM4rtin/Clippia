@@ -1,25 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { Camera, useThree } from '@react-three/fiber';
-
-const FileIcon = () => (
-  <div className="flex flex-col items-center m-2 cursor-pointer hover:bg-gray-200 p-1">
-    <div className="w-8 h-8 bg-white border border-gray-400 flex items-center justify-center text-xs">
-      .txt
-    </div>
-    <span className="text-xs mt-1">document.txt</span>
-  </div>
-);
-
-const FolderIcon = () => (
-  <div className="flex flex-col items-center m-2 cursor-pointer hover:bg-gray-200 p-1">
-    <div className="w-8 h-8 bg-yellow-100 border border-yellow-400 flex items-center justify-center">
-      📁
-    </div>
-    <span className="text-xs mt-1">My Folder</span>
-  </div>
-);
+import { Camera } from '@react-three/fiber';
+import { Wmsui323920, Notepad2 } from '@react95/icons';
 
 interface MyComputerWindowProps {
   position: [number, number, number];
@@ -31,6 +14,8 @@ interface MyComputerWindowProps {
   onPositionChange?: (x: number, y: number) => void;
   camera: Camera;
   size: { width: number; height: number };
+  onCreateTextWindow: (title: string, content: string, readOnly?: boolean) => void;
+  updateCursorStyle: (style: string) => void;
 }
 
 const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
@@ -43,13 +28,14 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
   onPositionChange,
   camera,
   size,
+  onCreateTextWindow,
+  updateCursorStyle
 }) => {
   const [currentPath, setCurrentPath] = useState('C:\\');
   const baseWidth = 500;
   const baseHeight = 300;
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({x: 0, y: 0});
-
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const handleTitleBarMouseDown = useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
@@ -86,7 +72,24 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  
+  const handleOpenAboutFile = () => {
+    const aboutTxtContent = [
+      "### clippia.io v1.0",
+      "**Features**",
+      "- Infinite whiteboard",
+      "- Windows 98-style UI",
+      "- Resizable windows",
+      "- Drag and drop windows",
+      "- Tiptap rich text editor",
+      "",
+      "**Roadmap**",
+      "- Amiga music player",
+      "",
+      "Made with ❤️ by [Martin](https://x.com/mrtincss)"
+    ];
+    onCreateTextWindow('About.txt', aboutTxtContent.join('\n'), true);
+  };
+
   return (
     <group position={position}>
       <Html
@@ -142,18 +145,18 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
               </div>
             </div>
 
-            <div className="flex-grow p-2 overflow-auto bg-white">
-              <div className="flex flex-wrap">
-                <FolderIcon />
-                <FolderIcon />
-                <FileIcon />
-                <FileIcon />
-                <FileIcon />
+            <div className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+              <div className="flex-grow p-2 overflow-auto bg-white">
+                  <Wmsui323920 className="w-6 h-6" />
+                  My Folder
               </div>
-            </div>
 
-            <div className="bg-gray-100 p-1 border-t border-gray-400">
-              <span className="text-xs">5 items</span>
+              <div className="flex-grow p-2 overflow-auto bg-white" onClick={handleOpenAboutFile}>
+  
+                  <Notepad2 className="w-6 h-6" />
+                  About.txt
+              </div>
+
             </div>
           </div>
         </div>
