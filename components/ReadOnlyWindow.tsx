@@ -7,6 +7,7 @@ import { Markdown } from 'tiptap-markdown';
 import BulletList from '@tiptap/extension-bullet-list';
 import ListItem from '@tiptap/extension-list-item';
 import Placeholder from '@tiptap/extension-placeholder';
+import Link from '@tiptap/extension-link';
 
 interface ReadOnlyWindowProps {
   title: string;
@@ -47,11 +48,17 @@ const ReadOnlyWindow: React.FC<ReadOnlyWindowProps> = ({
   // Initialize Tiptap editor with Markdown support
   const editor = useEditor({
     extensions: [
-        StarterKit,
-        Markdown.configure({
-            html: false, // Ensure Markdown is used
-        }),
-    ],
+        StarterKit.configure({
+            bulletList: false,
+          }),
+          Markdown,
+          BulletList,
+          ListItem,
+          Link,
+          Placeholder.configure({
+            placeholder: content,
+          })
+        ],
     content,
     editable: false,
   });

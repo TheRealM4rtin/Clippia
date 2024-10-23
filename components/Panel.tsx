@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import Feedback from '@/components/Feedback'
 import MenuTab from '@/components/tabs/MenuTab'
-import AboutTab from '@/components/tabs/AboutTab'
 import LoginTab from '@/components/tabs/LoginTab'
 import MyComputerWindow from './MyComputerWindow'
 
@@ -79,8 +78,6 @@ const Panel: React.FC<PanelProps> = ({
           disableAnimation={disableAnimation}
           toggleCloudAnimation={toggleCloudAnimation}
         />;
-      case 'about':
-        return <AboutTab />;
       case 'feedback':
         return <Feedback />;
       case 'login':
@@ -100,7 +97,7 @@ const Panel: React.FC<PanelProps> = ({
     <>
     <div className="panel" style={panelStyle}>
       <div style={{ display: 'flex', flexDirection: 'row' }}>
-        {['menu', 'feedback', 'login', 'about'].map((tab) => (
+        {['menu', 'feedback', 'login'].map((tab) => (
           <div 
             key={tab}
             style={tabStyle(activeTab === tab)}

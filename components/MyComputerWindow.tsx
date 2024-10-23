@@ -74,6 +74,14 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
 
   const handleOpenAboutFile = () => {
     const aboutTxtContent = [
+      
+      "Made with ❤️ by [Martin](https://x.com/mrtincss)"
+    ];
+    onCreateTextWindow('About.txt', aboutTxtContent.join('\n'), true);
+  };
+
+  const handleOpenChangelogFile = () => {
+    const changelogTxtContent = [
       "### clippia.io v1.0",
       "**Features**",
       "- Infinite whiteboard",
@@ -84,10 +92,8 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
       "",
       "**Roadmap**",
       "- Amiga music player",
-      "",
-      "Made with ❤️ by [Martin](https://x.com/mrtincss)"
     ];
-    onCreateTextWindow('About.txt', aboutTxtContent.join('\n'), true);
+    onCreateTextWindow('Changelog.txt', changelogTxtContent.join('\n'), true);
   };
 
   return (
@@ -156,6 +162,12 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({
                   <Notepad2 className="w-6 h-6" />
                   About.txt
               </div>
+
+              <div className="flex-grow p-2 overflow-auto bg-white flex items-center" onClick={handleOpenChangelogFile}>
+                  <Notepad2 className="w-6 h-6 mr-2" />
+                  Changelog.txt
+              </div>
+              
 
             </div>
           </div>
