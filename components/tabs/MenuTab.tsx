@@ -2,36 +2,38 @@ import React from 'react'
 import ButtonPanel from '@/components/ButtonPanel'
 import { Computer } from '@react95/icons';
 import styles from './MenuTab.module.css'
+import { useAppStore } from '@/lib/store'
 
 interface MenuTabProps {
-  windowCount: number
-  x: number
-  y: number
-  scale: number
-  onAddWindow: () => void
-  onResetView: () => void
-  colorBackground: boolean
-  toggleColorBackground: () => void
-  openComputerWindow: () => void;
-  width: number;
+  width: number
 }
 
-const MenuTab: React.FC<MenuTabProps> = ({ 
-  windowCount, x, y, scale, onAddWindow, onResetView,
-  colorBackground, toggleColorBackground,
-  openComputerWindow,
-  width
-}) => {
-  const handleButtonClick = (action: () => void) => (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    action();
-  };
+const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { windows, addWindow, updateWindow, resetView, colorBackground, toggleColorBackground, scale, position } = useAppStore()
+
+  const handleOpenMyComputer = () => {
+    console.log('Opening My Computer');
+    const existingMyComputer = windows.find(w => w.type === 'myComputer')
+    if (existingMyComputer) {
+      console.log('Existing My Computer window found, bringing to front');
+      updateWindow(existingMyComputer.id, { zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 })
+    } else {
+      console.log('Creating new My Computer window');
+      addWindow({
+        title: 'My Computer',
+        content: '',
+        size: { width: 0.3, height: 0.3 },
+        type: 'myComputer',
+        zIndex: windows.length + 1,
+      })
+    }
+  }
 
   return (
     <div className={styles.menuTab} style={{ width: width - 12 }}>
       <div className={styles.section}>
-        <div className={styles.computerIcon} onClick={openComputerWindow}>
+        <div className={styles.computerIcon} onClick={handleOpenMyComputer}>
           <Computer className={styles.icon} />
           <span>My Computer</span>
         </div>
@@ -40,15 +42,14 @@ const MenuTab: React.FC<MenuTabProps> = ({
       <div className={styles.divider} />
 
       <div className={styles.section}>
-        <p>Windows: {windowCount}</p>
-        <p>Scale: {scale.toFixed(2)}</p>
-        <p>Position: ({x.toFixed(0)}, {y.toFixed(0)})</p>
-
+        <p>Windows: {windows.filter(w => w.type === 'text').length}</p>
+        {/* <p>Scale: {scale.toFixed(2)}</p> */}
+        {/* <p>Position: ({position.x.toFixed(0)}, {position.y.toFixed(0)})</p> */}
         <ButtonPanel>
-          <ButtonPanel.Button onClick={handleButtonClick(onAddWindow)}>
+          <ButtonPanel.Button onClick={() => addWindow({ title: 'New Window', content: '', type: 'text', zIndex: windows.length + 1 })}>
             Add Window
           </ButtonPanel.Button>
-          <ButtonPanel.Button onClick={handleButtonClick(onResetView)}>
+          <ButtonPanel.Button onClick={resetView}>
             Reset View
           </ButtonPanel.Button>
         </ButtonPanel>
@@ -64,7 +65,7 @@ const MenuTab: React.FC<MenuTabProps> = ({
             type="radio" 
             name="color-background"
             checked={colorBackground}
-            onChange={() => toggleColorBackground()}
+            onChange={toggleColorBackground}
           />
           <label htmlFor="radio-color-yes">Yes</label>
         </div>
@@ -74,7 +75,7 @@ const MenuTab: React.FC<MenuTabProps> = ({
             type="radio" 
             name="color-background"
             checked={!colorBackground}
-            onChange={() => toggleColorBackground()}
+            onChange={toggleColorBackground}
           />
           <label htmlFor="radio-color-no">No</label>
         </div>

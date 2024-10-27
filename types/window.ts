@@ -1,13 +1,18 @@
 export interface Window {
   id: number;
   title: string;
-  text: string;
-  x: number;
-  y: number;
+  content: string;
+  position: {
+    x: number; // percentage
+    y: number; // percentage
+  };
+  size: {
+    width: number; // percentage
+    height: number; // percentage
+  };
   zIndex: number;
   creationTime: Date;
-  width: number;
-  height: number;
   isNew: boolean;
   isReadOnly: boolean;
+  type: 'text' | 'myComputer';
 }

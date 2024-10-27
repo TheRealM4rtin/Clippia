@@ -2,10 +2,6 @@
   font-family: 'Pixelated MS Sans Serif', Arial;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
-  z-index: 10000;
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
 }
 
 .tabContainer {
@@ -16,7 +12,7 @@
 .tab {
   padding: 1px 7px;
   cursor: pointer;
-  background-color: #D4D0C8;
+  background-color: rgba(255, 255, 255);
   border: 1px solid #0054E3;
   border-bottom: none;
   border-top-left-radius: 3px;
@@ -29,13 +25,14 @@
 }
 
 .activeTab {
-  background-color: white;
+  /* background-color: white; */
   top: 1px;
   z-index: 2;
 }
 
 .tabContent {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.9);
+
   border: 1px solid #0054E3;
   padding: 6px;
   font-size: 11px;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RadioButton } from '@react95/core';
 import styles from './Feedback.module.css';
 
 interface FeedbackProps {
@@ -11,6 +12,11 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [wouldContribute, setWouldContribute] = useState<string | null>(null);
+  const [contributionDetails, setContributionDetails] = useState('');
+
+  // Remove the user property
+  // const { user } = useAppStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +30,17 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, feedback }),
+        body: JSON.stringify({ 
+          username, 
+          feedback, 
+          wouldContribute, 
+          contributionDetails: wouldContribute === 'yes' ? contributionDetails : null,
+          // Remove userId from the request body
+        }),
       });
       if (response.ok) {
         setIsSubmitted(true);
-        setUsername('');
-        setFeedback('');
+        resetForm();
       } else {
         const data = await response.json();
         setError(`Failed to submit feedback: ${data.error}`);
@@ -39,6 +50,14 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
       setError('An error occurred. Please try again.');
     }
     setIsSubmitting(false);
+  };
+
+  const resetForm = () => {
+    setUsername('');
+    setFeedback('');
+    setWouldContribute(null);
+    setContributionDetails('');
+    setError('');
   };
 
   if (isSubmitted) {
@@ -64,11 +83,45 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
         placeholder="Your feedback"
         disabled={isSubmitting}
       />
+      <div className={styles.contributionQuestion}>
+        <p>If the project was open-source, would you like to contribute?</p>
+        <div className={styles.radioGroup}>
+          <label className={styles.radioLabel}>
+            <RadioButton
+              name="contribution"
+              value="yes"
+              checked={wouldContribute === 'yes'}
+              onChange={() => setWouldContribute('yes')}
+              disabled={isSubmitting}
+            />
+            Yes
+          </label>
+          <label className={styles.radioLabel}>
+            <RadioButton
+              name="contribution"
+              value="no"
+              checked={wouldContribute === 'no'}
+              onChange={() => setWouldContribute('no')}
+              disabled={isSubmitting}
+            />
+            No
+          </label>
+        </div>
+      </div>
+      {wouldContribute === 'yes' && (
+        <input
+          type="text"
+          value={contributionDetails}
+          onChange={(e) => setContributionDetails(e.target.value)}
+          placeholder="How would you like to contribute?"
+          disabled={isSubmitting}
+        />
+      )}
       <div className={styles.buttonGroup}>
         <button type="submit" disabled={isSubmitting || !username.trim() || !feedback.trim()}>
           Send
         </button>
-        <button type="button" onClick={() => { setUsername(''); setFeedback(''); setError(''); }} disabled={isSubmitting}>
+        <button type="button" onClick={resetForm} disabled={isSubmitting}>
           Clear
         </button>
       </div>
