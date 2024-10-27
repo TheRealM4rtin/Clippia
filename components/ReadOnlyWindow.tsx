@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import Draggable, { DraggableEvent } from 'react-draggable';
 import { Html } from '@react-three/drei';
-import { Window } from '@/types/Window';
+import { Window } from '@/types/window';
 
 interface ReadOnlyWindowProps {
   window: Window;

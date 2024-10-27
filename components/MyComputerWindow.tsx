@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import Draggable, { DraggableEvent } from 'react-draggable'
 import { useAppStore } from '@/lib/store'
-import { Window } from '@/types/Window'
+import { Window } from '@/types/window'
 import { Wmsui323920, Notepad2 } from '@react95/icons'
 import styles from './MyComputerWindow.module.css'
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Window } from '@/types/Window'
+import { Window } from '@/types/window'
 
 interface AppState {
   windows: Window[]

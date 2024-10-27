@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import { Markdown } from 'tiptap-markdown'
-import { Window } from '@/types/Window'
+import { Window } from '@/types/window'
 import { useAppStore } from '@/lib/store'
 
 interface TextWindowProps {
