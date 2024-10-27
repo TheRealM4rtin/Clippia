@@ -1,0 +1,76 @@
+.window {
+  background-color: #c0c0c0;
+  border: 2px solid #dfdfdf;
+  border-right-color: #404040;
+  border-bottom-color: #404040;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  font-family: 'Pixelated MS Sans Serif', Arial;
+  font-size: 11px;
+}
+
+.titleBar {
+  background-color: #000080;
+  color: white;
+  padding: 2px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleBarText {
+  font-weight: bold;
+}
+
+.titleBarControls {
+  display: flex;
+}
+
+.titleBarControls button {
+  width: 16px;
+  height: 14px;
+  border: 1px solid white;
+  background-color: #c0c0c0;
+  margin-left: 2px;
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  cursor: pointer;
+}
+
+.titleBarControls button:hover {
+  background-color: #dfdfdf;
+}
+
+.titleBarControls button:active {
+  border-color: #404040 #dfdfdf #dfdfdf #404040;
+  background-color: #a0a0a0;
+}
+
+.windowBody {
+  padding: 8px;
+  overflow: auto;
+}
+
+.fileList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.fileItem:hover {
+  background-color: #000080;
+  color: white;
+}
+
+.fileIcon {
+  margin-right: 8px;
+}

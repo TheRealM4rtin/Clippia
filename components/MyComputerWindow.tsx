@@ -1,30 +1,29 @@
-import React, { useState, useCallback } from 'react'
-import { Html } from '@react-three/drei'
-import { Wmsui323920, Notepad2 } from '@react95/icons'
+import React, { useCallback, useRef, useState } from 'react'
 import Draggable from 'react-draggable'
 import { useAppStore } from '@/lib/store'
 import { Window } from '@/types/Window'
-import { useThree } from '@react-three/fiber'
+import { Wmsui323920, Notepad2 } from '@react95/icons'
+import styles from './MyComputerWindow.module.css'
 
 interface MyComputerWindowProps {
   window: Window
+  viewportSize: { width: number; height: number }
 }
 
-const MyComputerWindow: React.FC<MyComputerWindowProps> = ({ window }) => {
-  const [currentPath] = useState('C:\\')
+const MyComputerWindow: React.FC<MyComputerWindowProps> = ({ window, viewportSize }) => {
   const { updateWindow, removeWindow, addWindow, windows } = useAppStore()
-  const { size } = useThree()
+  const nodeRef = useRef<HTMLDivElement>(null)
+  const [currentPath] = useState('C:\\')
 
   const handleDrag = useCallback((_e: any, data: { x: number; y: number }) => {
-    const newX = data.x / size.width
-    const newY = data.y / size.height
+    const newX = data.x / viewportSize.width
+    const newY = data.y / viewportSize.height
     updateWindow(window.id, { position: { x: newX, y: newY } })
-  }, [updateWindow, window.id, size])
+  }, [updateWindow, window.id, viewportSize])
 
   const openFile = (title: string, content: string) => {
     const existingWindow = windows.find(w => w.title === title && w.type === 'text')
     if (existingWindow) {
-      // Bring the existing window to the front
       updateWindow(existingWindow.id, { zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 })
     } else {
       addWindow({
@@ -58,45 +57,43 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({ window }) => {
   }
 
   return (
-    <Html>
-      <Draggable
-        position={{x: window.position.x * size.width, y: window.position.y * size.height}}
-        onDrag={handleDrag}
-      >
-        <div className="window" style={{
-          width: `${window.size.width * size.width}px`,
-          height: `${window.size.height * size.height}px`,
-          position: 'absolute',
-          zIndex: window.zIndex,
-        }}>
-          <div className="title-bar">
-            <div className="title-bar-text">My Computer</div>
-            <div className="title-bar-controls">
-              <button aria-label="Minimize"></button>
-              <button aria-label="Maximize"></button>
-              <button aria-label="Close" onClick={() => removeWindow(window.id)}></button>
-            </div>
-          </div>
-          <div className="window-body">
-            <p>Current path: {currentPath}</p>
-            <ul className="tree-view">
-              <li>
-                <Wmsui323920 style={{marginRight: '5px'}} />
-                My Folder
-              </li>
-              <li>
-                <Notepad2 style={{marginRight: '5px'}} onClick={handleOpenAboutFile} />
-                About.txt
-              </li>
-              <li>
-                <Notepad2 style={{marginRight: '5px'}} onClick={handleOpenChangelogFile} />
-                Changelog.txt
-              </li>
-            </ul>
+    <Draggable
+      nodeRef={nodeRef}
+      position={{x: window.position.x * viewportSize.width, y: window.position.y * viewportSize.height}}
+      onDrag={handleDrag}
+    >
+      <div ref={nodeRef} className={styles.window} style={{
+        width: `${window.size.width * viewportSize.width}px`,
+        height: `${window.size.height * viewportSize.height}px`,
+        zIndex: window.zIndex,
+      }}>
+        <div className={styles.titleBar}>
+          <div className={styles.titleBarText}>My Computer</div>
+          <div className="title-bar-controls">
+            <button aria-label="Minimize"></button>
+            <button aria-label="Maximize"></button>
+            <button aria-label="Close" onClick={() => removeWindow(window.id)}></button>
           </div>
         </div>
-      </Draggable>
-    </Html>
+        <div className={styles.windowBody}>
+          <p>Current path: {currentPath}</p>
+          <ul className={styles.fileList}>
+            <li className={styles.fileItem}>
+              <Wmsui323920 className={styles.fileIcon} />
+              My Folder
+            </li>
+            <li className={styles.fileItem} onClick={handleOpenAboutFile}>
+              <Notepad2 className={styles.fileIcon} />
+              About.txt
+            </li>
+            <li className={styles.fileItem} onClick={handleOpenChangelogFile}>
+              <Notepad2 className={styles.fileIcon} />
+              Changelog.txt
+            </li>
+          </ul>
+        </div>
+      </div>
+    </Draggable>
   )
 }
 

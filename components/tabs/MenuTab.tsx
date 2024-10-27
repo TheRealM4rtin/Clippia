@@ -9,24 +9,20 @@ interface MenuTabProps {
 }
 
 const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
-  const { windows, addWindow, resetView, colorBackground, toggleColorBackground, scale, position } = useAppStore()
-
-  const handleAddWindow = () => {
-    addWindow({
-      title: 'New Window',
-      content: '',
-      type: 'text',
-      zIndex: windows.length + 1,
-    })
-  }
+  const { windows, addWindow, updateWindow, resetView, colorBackground, toggleColorBackground, scale, position } = useAppStore()
 
   const handleOpenMyComputer = () => {
+    console.log('Opening My Computer');
     const existingMyComputer = windows.find(w => w.type === 'myComputer')
-    if (!existingMyComputer) {
+    if (existingMyComputer) {
+      console.log('Existing My Computer window found, bringing to front');
+      updateWindow(existingMyComputer.id, { zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 })
+    } else {
+      console.log('Creating new My Computer window');
       addWindow({
         title: 'My Computer',
         content: '',
-        size: { width: 0.3, height: 0.2 },
+        size: { width: 0.3, height: 0.3 },
         type: 'myComputer',
         zIndex: windows.length + 1,
       })
@@ -49,7 +45,7 @@ const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
         <p>Scale: {scale.toFixed(2)}</p>
         <p>Position: ({position.x.toFixed(0)}, {position.y.toFixed(0)})</p>
         <ButtonPanel>
-          <ButtonPanel.Button onClick={handleAddWindow}>
+          <ButtonPanel.Button onClick={() => addWindow({ title: 'New Window', content: '', type: 'text', zIndex: windows.length + 1 })}>
             Add Window
           </ButtonPanel.Button>
           <ButtonPanel.Button onClick={resetView}>

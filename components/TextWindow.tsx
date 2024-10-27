@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect, useRef } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -14,6 +14,7 @@ interface TextWindowProps {
 const TextWindow: React.FC<TextWindowProps> = ({ window }) => {
   const { updateWindow, removeWindow, viewportSize } = useAppStore()
   const [isDragging, setIsDragging] = useState(false)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     console.log('TextWindow rendered:', window);
@@ -44,9 +45,18 @@ const TextWindow: React.FC<TextWindowProps> = ({ window }) => {
       const html = editor.getHTML()
       updateWindow(window.id, { content: html })
     },
+    autofocus: window.isNew, // Focus the editor if it's a new window
   })
 
+  useEffect(() => {
+    if (editor && window.isNew) {
+      editor.commands.focus('end')
+      updateWindow(window.id, { isNew: false })
+    }
+  }, [editor, window.isNew, window.id, updateWindow])
+
   const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target instanceof HTMLButtonElement) return; // Prevent dragging when clicking buttons
     setIsDragging(true)
     console.log('Drag started');
     // Store the initial mouse position and window position
@@ -103,6 +113,7 @@ const TextWindow: React.FC<TextWindowProps> = ({ window }) => {
       }}>
         <EditorContent 
           editor={editor} 
+          ref={editorRef}
           style={{ 
             flex: 1, 
             overflow: 'auto',

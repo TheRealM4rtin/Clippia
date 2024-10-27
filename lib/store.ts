@@ -30,11 +30,11 @@ export const useAppStore = create<AppState>((set) => ({
       title: window.title || 'New Window',
       content: window.content || '',
       position: { 
-        x: Math.random() * 0.5 + 0.25, 
-        y: Math.random() * 0.5 + 0.25 
+        x: Math.random() * 0.5 + 0.25, // Adjust this to ensure windows are within view
+        y: Math.random() * 0.5 + 0.25  // Adjust this to ensure windows are within view
       },
-      size: window.size || { width: 0.3, height: 0.2 },
-      zIndex: state.windows.length,
+      size: window.size || { width: 0.3, height: 0.3 },
+      zIndex: Math.max(...state.windows.map(w => w.zIndex), 0) + 1,
       creationTime: new Date(),
       isNew: true,
       isReadOnly: window.isReadOnly ?? false,

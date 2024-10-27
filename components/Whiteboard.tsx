@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { useAppStore } from '@/lib/store'
 import TextWindow from '@/components/TextWindow'
@@ -8,8 +8,7 @@ import CameraController from '@/components/CameraController'
 import styles from './whiteboard.module.css'
 
 const Whiteboard: React.FC = () => {
-  const { windows, colorBackground, setViewportSize } = useAppStore()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { windows, colorBackground, setViewportSize, viewportSize } = useAppStore()
 
   useEffect(() => {
     const updateSize = () => {
@@ -31,7 +30,6 @@ const Whiteboard: React.FC = () => {
       <div className={colorBackground ? styles.colorBackground : styles.cloudBackground} aria-hidden="true" />
       <div className={styles.canvasContainer}>
         <Canvas
-          ref={canvasRef}
           orthographic
           camera={{ zoom: 50, position: [0, 0, 100], near: 0.1, far: 1000 }}
           dpr={window.devicePixelRatio}
@@ -47,13 +45,25 @@ const Whiteboard: React.FC = () => {
       </div>
       <div className={styles.windowsContainer}>
         {windows.map((window) => {
-          console.log('Rendering window:', window);
-          return window.type === 'text' ? (
-            <TextWindow key={window.id} window={window} />
-          ) : (
-            <MyComputerWindow key={window.id} window={window} />
-          );
+          if (window.type === 'text') {
+            return <TextWindow key={window.id} window={window} />;
+          } else if (window.type === 'myComputer') {
+            return <MyComputerWindow key={window.id} window={window} viewportSize={viewportSize} />;
+          } else {
+            console.warn(`Unknown window type: ${window.type}`);
+            return null;
+          }
         })}
+      </div>
+      <div className={styles.debug} style={{ zIndex: 20000 }}>
+        <h3>Debug Info</h3>
+        <p>Number of windows: {windows.length}</p>
+        <p>Viewport size: {viewportSize.width}x{viewportSize.height}</p>
+        {windows.map((window) => (
+          <div key={window.id}>
+            {window.title}: ({window.position.x.toFixed(2)}, {window.position.y.toFixed(2)})
+          </div>
+        ))}
       </div>
     </main>
   )
