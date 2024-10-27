@@ -55,16 +55,6 @@ const Whiteboard: React.FC = () => {
           }
         })}
       </div>
-      <div className={styles.debug} style={{ zIndex: 20000 }}>
-        <h3>Debug Info</h3>
-        <p>Number of windows: {windows.length}</p>
-        <p>Viewport size: {viewportSize.width}x{viewportSize.height}</p>
-        {windows.map((window) => (
-          <div key={window.id}>
-            {window.title}: ({window.position.x.toFixed(2)}, {window.position.y.toFixed(2)})
-          </div>
-        ))}
-      </div>
     </main>
   )
 }

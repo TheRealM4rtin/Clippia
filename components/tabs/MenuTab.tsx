@@ -42,8 +42,8 @@ const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
 
       <div className={styles.section}>
         <p>Windows: {windows.filter(w => w.type === 'text').length}</p>
-        <p>Scale: {scale.toFixed(2)}</p>
-        <p>Position: ({position.x.toFixed(0)}, {position.y.toFixed(0)})</p>
+        {/* <p>Scale: {scale.toFixed(2)}</p> */}
+        {/* <p>Position: ({position.x.toFixed(0)}, {position.y.toFixed(0)})</p> */}
         <ButtonPanel>
           <ButtonPanel.Button onClick={() => addWindow({ title: 'New Window', content: '', type: 'text', zIndex: windows.length + 1 })}>
             Add Window
