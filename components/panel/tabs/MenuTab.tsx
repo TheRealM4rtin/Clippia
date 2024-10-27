@@ -3,32 +3,68 @@ import ButtonPanel from '@/components/ButtonPanel'
 import { Computer } from '@react95/icons';
 import styles from './MenuTab.module.css'
 import { useAppStore } from '@/lib/store'
+import { useReactFlow } from '@xyflow/react'
 
 interface MenuTabProps {
   width: number
 }
 
 const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { windows, addWindow, updateWindow, resetView, colorBackground, toggleColorBackground, scale, position } = useAppStore()
+  const { 
+    windows, 
+    nodes,
+    addWindow,
+    removeWindow,
+    colorBackground, 
+    toggleColorBackground 
+  } = useAppStore();
+
+  // Get the ReactFlow instance
+  const { fitView } = useReactFlow();
 
   const handleOpenMyComputer = () => {
-    console.log('Opening My Computer');
-    const existingMyComputer = windows.find(w => w.type === 'myComputer')
+    const existingMyComputer = windows.find(w => w.type === 'myComputer');
     if (existingMyComputer) {
-      console.log('Existing My Computer window found, bringing to front');
-      updateWindow(existingMyComputer.id, { zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 })
+      // If MyComputer window exists, remove it
+      removeWindow(existingMyComputer.id);
     } else {
-      console.log('Creating new My Computer window');
+      // If it doesn't exist, create it
       addWindow({
         title: 'My Computer',
         content: '',
-        size: { width: 0.3, height: 0.3 },
         type: 'myComputer',
         zIndex: windows.length + 1,
-      })
+      });
     }
-  }
+  };
+
+  const handleAddWindow = () => {
+    console.log('Before adding window - Current windows:', windows);
+    console.log('Before adding window - Current nodes:', nodes);
+    
+    addWindow({ 
+      title: 'New Window', 
+      content: '', 
+      type: 'text', 
+      position: { x: 100, y: 100 }, // Set explicit position
+      size: { width: 300, height: 200 },
+      zIndex: windows.length + 1 
+    });
+
+    // Log after a short delay to ensure state has updated
+    setTimeout(() => {
+      console.log('After adding window - Current windows:', useAppStore.getState().windows);
+      console.log('After adding window - Current nodes:', useAppStore.getState().nodes);
+    }, 100);
+  };
+
+  const handleFitView = () => {
+    fitView({ 
+      padding: 0.2,
+      includeHiddenNodes: true,
+      duration: 200
+    });
+  };
 
   return (
     <div className={styles.menuTab} style={{ width: width - 12 }}>
@@ -43,14 +79,12 @@ const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
 
       <div className={styles.section}>
         <p>Windows: {windows.filter(w => w.type === 'text').length}</p>
-        {/* <p>Scale: {scale.toFixed(2)}</p> */}
-        {/* <p>Position: ({position.x.toFixed(0)}, {position.y.toFixed(0)})</p> */}
         <ButtonPanel>
-          <ButtonPanel.Button onClick={() => addWindow({ title: 'New Window', content: '', type: 'text', zIndex: windows.length + 1 })}>
+          <ButtonPanel.Button onClick={handleAddWindow}>
             Add Window
           </ButtonPanel.Button>
-          <ButtonPanel.Button onClick={resetView}>
-            Reset View
+          <ButtonPanel.Button onClick={handleFitView}>
+            Fit View
           </ButtonPanel.Button>
         </ButtonPanel>
       </div>
@@ -81,7 +115,7 @@ const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MenuTab
+export default MenuTab;

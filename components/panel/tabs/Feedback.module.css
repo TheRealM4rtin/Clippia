@@ -34,7 +34,7 @@
 }
 
 .contributionQuestion {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .radioGroup {
@@ -45,7 +45,7 @@
 .radioLabel {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 13px;
 }
 
 .error {

@@ -1,30 +1,27 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react'
-import { EditorContent, useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import Link from '@tiptap/extension-link'
-import { Markdown } from 'tiptap-markdown'
-import { Window } from '@/types/window'
-import { useAppStore } from '@/lib/store'
+import React, { useCallback, useEffect } from 'react';
+import { Handle, Position, NodeProps, NodeResizeControl } from '@xyflow/react';
+import { useAppStore } from '@/lib/store';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import Link from '@tiptap/extension-link';
+import { Markdown } from 'tiptap-markdown';
 
-interface TextWindowProps {
-  window: Window
+interface WindowData {
+  size?: {
+    width?: number;
+    height?: number;
+  };
+  // ... other properties
 }
 
-const TextWindow: React.FC<TextWindowProps> = ({ window }) => {
-  const { updateWindow, removeWindow, viewportSize } = useAppStore()
-  const [isDragging, setIsDragging] = useState(false)
-  const editorRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    console.log('TextWindow rendered:', window);
-    console.log('Viewport size:', viewportSize);
-  }, [window, viewportSize]);
+const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, selected }) => {
+  const { updateWindow, removeWindow } = useAppStore();
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        bulletList: false,
+        bulletList: {},  // Provide an empty object or specific configuration options
       }),
       Markdown,
       Link.configure({
@@ -32,99 +29,178 @@ const TextWindow: React.FC<TextWindowProps> = ({ window }) => {
         linkOnPaste: true,
       }),
       Placeholder.configure({
-        placeholder: 'Type here to start...',
+        placeholder: data.isReadOnly ? '' : 'Type here to start...',
       }),
     ],
-    content: window.content,
-    editorProps: {
-      attributes: {
-        class: 'windows98-text',
-      },
-    },
+    content: data.content || '',
+    editable: !data.isReadOnly,
+    
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      updateWindow(window.id, { content: html })
+      if (!data.isReadOnly) {
+        const html = editor.getHTML();
+        updateWindow(id, { content: html });
+      }
     },
-    autofocus: window.isNew, // Focus the editor if it's a new window
-  })
+    autofocus: false,  // Remove autofocus from here
+  });
 
   useEffect(() => {
-    if (editor && window.isNew) {
-      editor.commands.focus('end')
-      updateWindow(window.id, { isNew: false })
+    if (editor && data.isNew && !data.isReadOnly) {
+      setTimeout(() => {
+        editor.commands.focus('end');  // Directly focus the editor
+      }, 0);  // Use a timeout to ensure the editor is ready
+      updateWindow(id, { isNew: false });
     }
-  }, [editor, window.isNew, window.id, updateWindow])
+  }, [editor, data.isNew, data.isReadOnly, id, updateWindow]);
 
-  const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target instanceof HTMLButtonElement) return; // Prevent dragging when clicking buttons
-    setIsDragging(true)
-    console.log('Drag started');
-    // Store the initial mouse position and window position
-    const startX = e.clientX - window.position.x * viewportSize.width;
-    const startY = e.clientY - window.position.y * viewportSize.height;
-    const handleDrag = (e: MouseEvent) => {
-      const newX = (e.clientX - startX) / viewportSize.width;
-      const newY = (e.clientY - startY) / viewportSize.height;
-      updateWindow(window.id, { position: { x: newX, y: newY } });
-    };
-    const handleDragEnd = () => {
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleDrag);
-      document.removeEventListener('mouseup', handleDragEnd);
-    };
-    document.addEventListener('mousemove', handleDrag);
-    document.addEventListener('mouseup', handleDragEnd);
-  }, [updateWindow, window.id, viewportSize, window.position.x, window.position.y])
+  useEffect(() => {
+    if (selected && editor) {
+      editor.commands.focus('end');
+    }
+  }, [selected, editor]);
 
-  const windowStyle = {
-    width: `${window.size.width * viewportSize.width}px`,
-    height: `${window.size.height * viewportSize.height}px`,
-    position: 'fixed' as const,
-    zIndex: window.zIndex,
-    left: `${window.position.x * viewportSize.width}px`,
-    top: `${window.position.y * viewportSize.height}px`,
-    backgroundColor: 'white',
-    border: '2px solid #000080',
-  };
+  const handleClose = useCallback(() => {
+    removeWindow(id);
+  }, [id, removeWindow]);
 
-  console.log('Window style:', windowStyle);
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (editor) {
+      editor.commands.focus('end');
+    }
+  }, [editor]);
 
   return (
-    <div
+    <div 
       className="window"
-      style={windowStyle}
-      onMouseDown={handleDragStart}
+      style={{
+        width: data.size?.width ?? 300,
+        height: data.size?.height ?? 200,
+        backgroundColor: 'white',
+        border: '2px solid #000080',
+        position: 'relative',
+        zIndex: typeof data.zIndex === 'number' ? data.zIndex : 1,
+        outline: selected ? '2px solid #000080' : 'none',
+        boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.2)',
+      }}
+      onClick={handleClick}
     >
-      <div className="title-bar" style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
-        <div className="title-bar-text">{window.title}</div>
+      {!data.isReadOnly && (
+        <>
+          {/* Custom resize controls with larger interaction areas */}
+          <NodeResizeControl 
+            position="top-left" 
+            style={{ width: '25px', height: '25px', cursor: 'nw-resize', border: 'none', background: 'transparent' }} 
+            onResize={(event, { width, height }) => {
+              updateWindow(id, { size: { width, height } });
+            }}
+          />
+          <NodeResizeControl 
+            position="top-right" 
+            style={{ width: '25px', height: '25px', cursor: 'ne-resize', border: 'none', background: 'transparent' }} 
+            onResize={(event, { width, height }) => {
+              updateWindow(id, { size: { width, height } });
+            }}
+          />
+          <NodeResizeControl 
+            position="bottom-left" 
+            style={{ width: '25px', height: '25px', cursor: 'sw-resize', border: 'none', background: 'transparent' }} 
+            onResize={(event, { width, height }) => {
+              updateWindow(id, { size: { width, height } });
+            }}
+          />
+          <NodeResizeControl 
+            position="bottom-right" 
+            style={{ width: '25px', height: '25px', cursor: 'se-resize', border: 'none', background: 'transparent' }} 
+            onResize={(event, { width, height }) => {
+              updateWindow(id, { size: { width, height } });
+            }}
+          />
+          <Handle 
+            type="target" 
+            position={Position.Top} 
+            id="top-target"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+          <Handle 
+            type="source" 
+            position={Position.Top} 
+            id="top-source"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+          <Handle 
+            type="target" 
+            position={Position.Bottom} 
+            id="bottom-target"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+          <Handle 
+            type="source" 
+            position={Position.Bottom} 
+            id="bottom-source"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+          <Handle 
+            type="target" 
+            position={Position.Left} 
+            id="left-target"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+          <Handle 
+            type="source" 
+            position={Position.Left} 
+            id="left-source"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+          <Handle 
+            type="target" 
+            position={Position.Right} 
+            id="right-target"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+          <Handle 
+            type="source" 
+            position={Position.Right} 
+            id="right-source"
+            style={{ visibility: selected ? 'visible' : 'hidden' }} 
+          />
+        </>
+      )}
+
+      
+      
+      <div className="title-bar">
+        <div className="title-bar-text">{data.title as string}</div>
         <div className="title-bar-controls">
-          <button aria-label="Minimize"></button>
-          <button aria-label="Maximize"></button>
-          <button aria-label="Close" onClick={() => removeWindow(window.id)}></button>
+          <button aria-label="Minimize" />
+          <button aria-label="Maximize" />
+          <button aria-label="Close" onClick={handleClose} />
         </div>
       </div>
-      <div className="window-body" style={{ 
-        padding: '0.5rem', 
-        height: 'calc(100% - 2rem)', 
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        cursor: 'default',
-      }}>
+      <div 
+        className="window-body"
+        style={{
+          margin: 0,
+          padding: '0.5rem',
+          height: 'calc(100% - 2rem)',
+          backgroundColor: 'white',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          cursor: data.isReadOnly ? 'default' : 'text',
+        }}
+      >
         <EditorContent 
-          editor={editor} 
-          ref={editorRef}
-          style={{ 
-            flex: 1, 
+          editor={editor}
+          style={{
+            flex: 1,
             overflow: 'auto',
             height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
           }}
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TextWindow
+export default TextWindow;

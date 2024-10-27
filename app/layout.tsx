@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Analytics } from "@vercel/analytics/react"
 import localFont from 'next/font/local';
+import '98.css';  // Add this import
 import './globals.css';
 import "xp.css/dist/98.css";
 import './tiptap.css';
@@ -9,11 +10,13 @@ import '@react95/core/GlobalStyle';
 import '@react95/core/themes/win95.css';
 import React from 'react';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
   variable: '--font-geist-sans',
   weight: '100 900',
 });
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const geistMono = localFont({
   src: './fonts/GeistMonoVF.woff',
   variable: '--font-geist-mono',
@@ -27,15 +30,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className="w-full h-full">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-full h-full m-0 p-0 overflow-hidden`}>
-        <Analytics />
-        {children}
-      </body>
+    <html lang="en">
+      <Analytics />
+      <body>{children}</body>
     </html>
   );
 }
