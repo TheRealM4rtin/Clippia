@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import Feedback from '@/components/tabs/Feedback'
-import MenuTab from '@/components/tabs/MenuTab'
-import LoginTab from '@/components/tabs/LoginTab'
-import styles from './Panel.module.css'
+import React, { useState, useEffect } from 'react';
+import Feedback from '@/components/panel/tabs/Feedback';
+import MenuTab from '@/components/panel/tabs/MenuTab';
+import LoginTab from '@/components/panel/tabs/LoginTab';
+import styles from './Panel.module.css';
 
 const Panel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('menu');
@@ -52,4 +52,4 @@ const Panel: React.FC = () => {
   );
 };
 
-export default Panel
+export default Panel;

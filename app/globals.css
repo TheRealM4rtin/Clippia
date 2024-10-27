@@ -72,3 +72,25 @@ canvas {
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* React Flow styles */
+.react-flow__viewport {
+  transform-origin: 0 0;
+  z-index: 0;
+}
+
+.react-flow__container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.react-flow__pane {
+  z-index: 1;
+}
+
+.react-flow__node {
+  z-index: 2;
+}

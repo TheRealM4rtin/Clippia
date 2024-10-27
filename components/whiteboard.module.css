@@ -40,8 +40,8 @@
   }
 
 .whiteboard {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   position: relative;
   overflow: hidden;
 }
@@ -64,7 +64,7 @@
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 1000001;
+  z-index: 1000;
 }
 
 .colorBackground {
@@ -114,7 +114,6 @@
   pointer-events: auto;
 }
 
-/* Add this new style */
 .debug {
   position: fixed;
   top: 10px;
