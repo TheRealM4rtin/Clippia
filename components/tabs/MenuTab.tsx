@@ -9,6 +9,7 @@ interface MenuTabProps {
 }
 
 const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { windows, addWindow, updateWindow, resetView, colorBackground, toggleColorBackground, scale, position } = useAppStore()
 
   const handleOpenMyComputer = () => {

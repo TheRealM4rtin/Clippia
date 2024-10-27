@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import styles from './LoginTab.module.css';
 // import ButtonPanel from '@/components/ButtonPanel';
 import { loadStripe } from '@stripe/stripe-js';
-import { useAppStore } from '@/lib/store';
+// import { useAppStore } from '@/lib/store';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -17,7 +17,7 @@ const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { setUser } = useAppStore();
+  // const { setUser } = useAppStore();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -32,7 +32,7 @@ const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
     if (error) {
       setError(error.message);
     } else if (data.user) {
-      setUser(data.user);
+      // setUser(data.user);
       // Check subscription status
       const { data: subscriptionData, error: subscriptionError } = await supabase
         .from('subscriptions')

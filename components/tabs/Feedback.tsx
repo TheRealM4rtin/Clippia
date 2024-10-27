@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { RadioButton } from '@react95/core';
 import styles from './Feedback.module.css';
-import { useAppStore } from '@/lib/store';
 
 interface FeedbackProps {
   width: number;
@@ -16,7 +15,8 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   const [wouldContribute, setWouldContribute] = useState<string | null>(null);
   const [contributionDetails, setContributionDetails] = useState('');
 
-  const { user } = useAppStore();
+  // Remove the user property
+  // const { user } = useAppStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +35,7 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
           feedback, 
           wouldContribute, 
           contributionDetails: wouldContribute === 'yes' ? contributionDetails : null,
-          userId: user?.id
+          // Remove userId from the request body
         }),
       });
       if (response.ok) {

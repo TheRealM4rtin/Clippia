@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import Draggable from 'react-draggable';
+import Draggable, { DraggableEvent } from 'react-draggable';
 import { Html } from '@react-three/drei';
 import { Window } from '@/types/Window';
 
@@ -12,7 +12,7 @@ interface ReadOnlyWindowProps {
 const ReadOnlyWindow: React.FC<ReadOnlyWindowProps> = ({ window, onClose, onUpdate }) => {
   const nodeRef = useRef(null);
 
-  const handleDrag = useCallback((_e: any, data: { x: number; y: number }) => {
+  const handleDrag = useCallback((_e: DraggableEvent, data: { x: number; y: number }) => {
     onUpdate({ position: { x: data.x, y: data.y } });
   }, [onUpdate]);
 

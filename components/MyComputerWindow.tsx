@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react'
-import Draggable from 'react-draggable'
+import Draggable, { DraggableEvent } from 'react-draggable'
 import { useAppStore } from '@/lib/store'
 import { Window } from '@/types/Window'
 import { Wmsui323920, Notepad2 } from '@react95/icons'
@@ -15,7 +15,7 @@ const MyComputerWindow: React.FC<MyComputerWindowProps> = ({ window, viewportSiz
   const nodeRef = useRef<HTMLDivElement>(null)
   const [currentPath] = useState('C:\\')
 
-  const handleDrag = useCallback((_e: any, data: { x: number; y: number }) => {
+  const handleDrag = useCallback((_e: DraggableEvent, data: { x: number; y: number }) => {
     const newX = data.x / viewportSize.width
     const newY = data.y / viewportSize.height
     updateWindow(window.id, { position: { x: newX, y: newY } })
