@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
-import { Wmsui323920, Notepad2 } from '@react95/icons';
+import { Wmsui323920, Notepad2, Save } from '@react95/icons';
 import styles from './MyComputerWindow.module.css';
 
 const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
@@ -35,7 +35,18 @@ const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
   };
 
   const handleOpenAboutFile = () => {
-    const aboutTxtContent = "Made with ❤️ by [Martin](https://x.com/mrtincss)";
+    const aboutTxtContent = [
+      "- Open-Source community driven",
+      "- Infinite visual note-taking app",
+      "- Retro mindmap",
+      "- DuckduckGo Search integration",
+      "### Clippia cloud :",
+      "- Save your workboard (free)",
+      "- Store your files inside windows ($)",
+      "- Access AI tools to retrieve your files ($)",
+      "- Publish a workboard ($) \n",
+      "Made with ❤️ by [Martin](https://x.com/mrtincss)"
+    ].join('\n');
     openFile('About.txt', aboutTxtContent);
   };
 
@@ -46,9 +57,9 @@ const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
       "- Infinite whiteboard",
       "- Windows 98-style UI",
       "- Resizable windows",
-      "- Drag and drop windows",
-      "- Tiptap rich text editor",
-      "",
+      "- Drag and drop windows", 
+      "- Markdown supported",
+      "- Create connections between windows",
       "**Roadmap**",
       "- Amiga music player",
     ].join('\n');
