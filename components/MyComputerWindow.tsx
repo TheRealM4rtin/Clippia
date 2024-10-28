@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
-import { Wmsui323920, Notepad2, Save } from '@react95/icons';
+import { Wmsui323920, Notepad2 } from '@react95/icons';
 import styles from './MyComputerWindow.module.css';
 
 const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
