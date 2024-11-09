@@ -11,16 +11,18 @@ import '@xyflow/react/dist/style.css';
 
 import { useAppStore } from '@/lib/store'
 import TextWindow from './TextWindow'
-import MyComputerWindow from './MyComputerWindow'
+import MyComputerWindow from './panel/windows/MyComputerWindow'
 import Panel from './panel/Panel'
 import styles from './whiteboard.module.css'  // Make sure to import the styles
-import FeedbackWindow from './FeedbackWindow';
+import FeedbackWindow from './panel/windows/FeedbackWindow';
+import LoginWindow from './panel/windows/LoginWindow';
 
 // Define node types with correct keys matching the window types
 const nodeTypes = {
   text: TextWindow,
   myComputer: MyComputerWindow,
-  feedback: FeedbackWindow
+  feedback: FeedbackWindow,
+  login: LoginWindow
 } as const;
 
 // Create a separate component for the Flow content

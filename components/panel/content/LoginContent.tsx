@@ -1,11 +1,10 @@
-'use client'
+ 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import styles from './LoginTab.module.css';
+import styles from '../style/LoginWindow.module.css';
 import { z } from 'zod';
-import { signUp } from '@/lib/auth';
 import { User } from '@supabase/supabase-js';
 
 const passwordSchema = z.string()
@@ -20,7 +19,7 @@ interface LoginTabProps {
 }
 
 
-const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
+const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -220,4 +219,4 @@ const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
   );
 };
 
-export default LoginTab;
+export default LoginContent;

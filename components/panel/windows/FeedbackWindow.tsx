@@ -1,8 +1,9 @@
 import React, { useRef } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
-import styles from './FeedbackWindow.module.css';
-import FeedbackContent from '@/components/panel/tabs/Feedback';
+import commonStyles from '../style/common.module.css';
+import styles from '../style/FeedbackWindow.module.css';
+import FeedbackContent from '@/components/panel/content/FeedbackContent';
 
 const FeedbackWindow: React.FC<NodeProps> = ({ id, data }) => {
   const { updateWindow, removeWindow, windows } = useAppStore();
@@ -20,17 +21,17 @@ const FeedbackWindow: React.FC<NodeProps> = ({ id, data }) => {
   return (
     <div 
       ref={nodeRef} 
-      className={styles.window}
+      className={commonStyles.window}
       onClick={handleClick}
       style={{ zIndex: data.zIndex as number }}
     >
-      <div className={styles.titleBar}>
-        <div className={styles.titleBarText}>Feedback.exe</div>
+      <div className={commonStyles.titleBar}>
+        <div className={commonStyles.titleBarText}>Feedback.exe</div>
         <div className="title-bar-controls">
           <button aria-label="Close" onClick={handleClose} />
         </div>
       </div>
-      <div className={styles.windowBody}>
+      <div className={commonStyles.windowBody}>
         <FeedbackContent width={400} />
       </div>
     </div>

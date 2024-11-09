@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RadioButton } from '@react95/core';
-import styles from './Feedback.module.css';
+import styles from '../style/FeedbackWindow.module.css';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
