@@ -9,7 +9,6 @@ const Panel: React.FC = () => {
   const [panelWidth, setPanelWidth] = useState(250);
   const { 
     windows, 
-    nodes,
     addWindow,
     removeWindow,
     colorBackground, 
@@ -31,7 +30,7 @@ const Panel: React.FC = () => {
 
   const handleOpenMyComputer = () => {
     const existingMyComputer = windows.find(w => w.type === 'myComputer');
-    if (existingMyComputer) {
+    if (existingMyComputer?.id) {
       removeWindow(existingMyComputer.id);
     } else {
       addWindow({
@@ -64,7 +63,7 @@ const Panel: React.FC = () => {
 
   const handleOpenFeedback = () => {
     const existingFeedback = windows.find(w => w.type === 'feedback');
-    if (existingFeedback) {
+    if (existingFeedback?.id) {
       removeWindow(existingFeedback.id);
     } else {
       addWindow({
@@ -78,7 +77,7 @@ const Panel: React.FC = () => {
 
   const handleOpenLogin = () => {
     const existingLogin = windows.find(w => w.type === 'login');
-    if (existingLogin) {
+    if (existingLogin?.id) {
       removeWindow(existingLogin.id);
     } else {
       addWindow({

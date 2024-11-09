@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../style/LoginWindow.module.css';
 import { z } from 'zod';
-import { User } from '@supabase/supabase-js';
 import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/utils/supabase/client';
+
+const supabase = createClient();
 
 const passwordSchema = z.string()
   .min(8, 'Password must be at least 8 characters')
@@ -53,6 +54,11 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (!validateInput()) {
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isRegistering) {
@@ -190,8 +196,8 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
 
             {error && <p className={styles.error}>{error}</p>}
 
-            <button type="submit" className={styles.submitButton}>
-              {isRegistering ? 'Register' : 'Login'}
+            <button type="submit" className={styles.submitButton} disabled={loading}>
+              {loading ? 'Loading...' : (isRegistering ? 'Register' : 'Login')}
             </button>
           </form>
         </>

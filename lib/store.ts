@@ -83,6 +83,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // Find windows near the viewport center with a larger radius
     const windowsNearby = currentWindows.filter(w => {
+      if (!w.position) return false;
+      
       const distance = Math.sqrt(
         Math.pow(w.position.x - centerX, 2) + 
         Math.pow(w.position.y - centerY, 2)

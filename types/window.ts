@@ -1,12 +1,14 @@
 import { Node, Edge } from '@xyflow/react';
 
+export type WindowType = 'text' | 'myComputer' | 'feedback' | 'login';
+
 export interface Window {
-  id: string;
+  id?: string;
   title: string;
   content: string;
-  type: 'text' | 'myComputer';
-  position: { x: number; y: number };
-  size: { width: number; height: number };
+  type: WindowType;
+  position?: { x: number; y: number };
+  size?: { width: number; height: number };
   zIndex: number;
   isReadOnly?: boolean;
   isNew?: boolean;

@@ -26,7 +26,7 @@ const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
 
   const openFile = (title: string, content: string) => {
     const existingWindow = windows.find(w => w.title === title && w.type === 'text');
-    if (existingWindow) {
+    if (existingWindow?.id) {
       updateWindow(existingWindow.id, { 
         zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 
       });

@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
 import commonStyles from '../style/common.module.css';
-import styles from '../style/LoginWindow.module.css';
 import LoginContent from '@/components/panel/content/LoginContent';
 
 const LoginWindow: React.FC<NodeProps> = ({ id, data }) => {

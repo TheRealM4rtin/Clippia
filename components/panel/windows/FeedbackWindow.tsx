@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
 import commonStyles from '../style/common.module.css';
-import styles from '../style/FeedbackWindow.module.css';
 import FeedbackContent from '@/components/panel/content/FeedbackContent';
 
 const FeedbackWindow: React.FC<NodeProps> = ({ id, data }) => {

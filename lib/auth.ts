@@ -1,5 +1,4 @@
 import { createClient } from '@/utils/supabase/client'
-import { addDays } from 'date-fns'
 import logger from '@/lib/logger'
 
 const supabase = createClient()
@@ -17,17 +16,6 @@ export const signUp = async (email: string, password: string) => {
     if (authError) throw authError;
 
     if (authData.user) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          email_verification_deadline: new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)).toISOString() 
-        })
-        .eq('id', authData.user.id);
-
-      if (updateError) {
-        console.error('Error setting verification deadline:', updateError);
-      }
-
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -54,7 +42,7 @@ export const checkVerificationStatus = async () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('verification_deadline, email_verified')
+      .select('email_verified')
       .eq('id', user.id)
       .single()
 

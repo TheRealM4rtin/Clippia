@@ -1,6 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
+// This tells Next.js that this route should always be handled dynamically at runtime,
+// which is necessary for auth callbacks since they need to process dynamic URL parameters and tokens.
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url)

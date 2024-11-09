@@ -1,5 +1,6 @@
 import { Node, Edge, OnNodesChange, OnEdgesChange, OnConnect } from '@xyflow/react';
 import { Window } from './window';
+import { User } from '@supabase/supabase-js';
 
 export interface AppState {
   // React Flow State
@@ -23,8 +24,8 @@ export interface AppState {
   setViewportSize: (size: { width: number; height: number }) => void;
 
   // User State
-  user: any | null;
-  setUser: (user: any | null) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
 
   // Viewport State
   viewport: { x: number; y: number; zoom: number };
