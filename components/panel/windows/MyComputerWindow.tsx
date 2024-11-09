@@ -76,7 +76,7 @@ const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
         </div>
       </div>
       <div className={commonStyles.windowBody}>
-        <p>Current path: {currentPath}</p>
+        <p>{currentPath}</p>
         <ul className={styles.fileList}>
           <li className={styles.fileItem}>
             <Wmsui323920 className={styles.fileIcon} />

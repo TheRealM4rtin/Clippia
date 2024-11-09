@@ -97,14 +97,15 @@ const Panel: React.FC = () => {
           <Computer className={styles.icon} />
           <span>My Computer</span>
         </div>
+        <div className={styles.computerIcon} onClick={handleOpenLogin}>
+          <User className={styles.icon} />
+          <span>Connect</span>
+        </div>
         <div className={styles.computerIcon} onClick={handleOpenFeedback}>
           <Mail className={styles.icon} />
           <span>Feedback.exe</span>
         </div>
-        <div className={styles.computerIcon} onClick={handleOpenLogin}>
-          <User className={styles.icon} />
-          <span>Connect.exe</span>
-        </div>
+
       </div>
 
       <div className={styles.divider} />

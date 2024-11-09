@@ -1,8 +1,8 @@
 .panel {
-  background: #c0c0c0;
+  /* background: #c0c0c0; */
   height: 100%;
-  border-right: 1px solid #868a8e;
-  box-shadow: 1px 0 0 0 #ffffff inset;
+  /* border-right: 1px solid #868a8e; */
+  /* box-shadow: 1px 0 0 0 #ffffff inset; */
   overflow-y: auto;
   overflow-x: hidden;
   padding: 6px;
@@ -14,8 +14,8 @@
 
 .divider {
   height: 1px;
-  background: #868a8e;
-  border-bottom: 1px solid #ffffff;
+  /* background: #868a8e; */
+  /* border-bottom: 1px solid #ffffff; */
   margin: 8px 0;
 }
 
