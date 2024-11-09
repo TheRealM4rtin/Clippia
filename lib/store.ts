@@ -10,6 +10,7 @@ import {
   EdgeChange,
 } from '@xyflow/react';
 import { Window } from '@/types/window';
+import { User } from '@supabase/supabase-js';
 
 interface AppState {
   // React Flow State
@@ -40,6 +41,9 @@ interface AppState {
   scale: number;
   setPosition: (position: { x: number; y: number }) => void;
   setScale: (scale: number) => void;
+  
+  user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -174,4 +178,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   scale: 1,
   setPosition: (position) => set({ position }),
   setScale: (scale) => set({ scale }),
+
+  user: null,
+  setUser: (user) => set({ user }),
 }));

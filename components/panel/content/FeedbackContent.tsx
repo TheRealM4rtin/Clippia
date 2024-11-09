@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { RadioButton } from '@react95/core';
 import styles from '../style/FeedbackWindow.module.css';
-import { createClient } from '@/utils/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FeedbackProps {
   width: number;
 }
 
 const Feedback: React.FC<FeedbackProps> = ({ width }) => {
+  const { user } = useAuth();
   const [username, setUsername] = useState('');
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,32 +16,12 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   const [error, setError] = useState('');
   const [wouldContribute, setWouldContribute] = useState<string | null>(null);
   const [contributionDetails, setContributionDetails] = useState('');
-  const [user, setUser] = useState<User | null>(null);
-
-  const supabase = createClient();
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user?.email) {
-        setUsername(user.email);
-      }
-    };
-
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user?.email) {
-        setUsername(session.user.email);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (user?.email) {
+      setUsername(user.email);
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,9 +57,6 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   };
 
   const resetForm = () => {
-    if (!user) {
-      setUsername('');
-    }
     setFeedback('');
     setWouldContribute(null);
     setContributionDetails('');

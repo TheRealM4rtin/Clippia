@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from '../style/LoginWindow.module.css';
 import { z } from 'zod';
 import { User } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 
 const passwordSchema = z.string()
   .min(8, 'Password must be at least 8 characters')
@@ -26,29 +27,9 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
-  const supabase = createClient()
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        router.refresh();
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase, router]);
+  const { user } = useAuth();
 
   const validateInput = () => {
     try {
