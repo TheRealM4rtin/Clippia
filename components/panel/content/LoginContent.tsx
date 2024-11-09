@@ -62,25 +62,6 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
 
     try {
       if (isRegistering) {
-        const { data: existingUser, error: checkError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', email)
-          .single();
-
-        if (existingUser) {
-          setError('An account with this email already exists. Please log in instead.');
-          setLoading(false);
-          return;
-        }
-
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error checking existing user:', checkError);
-          setError('An error occurred. Please try again.');
-          setLoading(false);
-          return;
-        }
-
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -90,7 +71,11 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
         });
 
         if (signUpError) {
-          setError(signUpError.message);
+          if (signUpError.message.toLowerCase().includes('email already registered')) {
+            setError('An account with this email already exists. Please log in instead.');
+          } else {
+            setError(signUpError.message);
+          }
           return;
         }
 

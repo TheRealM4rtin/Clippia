@@ -13,54 +13,67 @@ export async function GET(request: Request) {
     const error = requestUrl.searchParams.get('error')
     const error_description = requestUrl.searchParams.get('error_description')
 
-    // If there's an error in the URL, redirect to error page with details
+    // Handle incoming error parameters
     if (error || error_description) {
-      logger.error('Auth callback error:', { error, error_description })
+      logger.error('Auth callback received error:', { error, error_description })
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${error}&description=${error_description}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(error || '')}&description=${encodeURIComponent(error_description || '')}`
       )
     }
 
     if (!code) {
-      throw new Error('No code provided')
+      logger.error('No code provided in callback')
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=no_code&description=No verification code provided`
+      )
     }
 
     const supabase = createClient()
     
-    // Exchange code for session
-    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
+    // Exchange code for session with error handling
+    const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
     
     if (sessionError) {
-      throw sessionError
+      logger.error('Session exchange error:', sessionError)
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(sessionError.name)}&description=${encodeURIComponent(sessionError.message)}`
+      )
     }
 
-    // Get the user and update their profile
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (userError) {
-      throw userError
+    if (!sessionData.session || !sessionData.user) {
+      logger.error('No session or user data returned')
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=no_session&description=No session data returned`
+      )
     }
 
-    if (user) {
+    try {
+      // Update user profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
+        .upsert({ 
+          id: sessionData.user.id,
           email_verified: true,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
         })
-        .eq('id', user.id)
 
       if (profileError) {
         logger.error('Profile update error:', profileError)
+        // Continue with redirect even if profile update fails
       }
+    } catch (profileError) {
+      logger.error('Profile update error:', profileError)
+      // Continue with redirect even if profile update fails
     }
 
-    // Redirect to the home page
-    return NextResponse.redirect(process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin)
+    // Successful verification - redirect to home
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}`)
   } catch (error) {
-    logger.error('Auth callback error:', error)
+    logger.error('Unexpected auth callback error:', error)
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=server_error&description=${encodeURIComponent((error as Error).message || 'An unexpected error occurred')}`
     )
   }
 }
