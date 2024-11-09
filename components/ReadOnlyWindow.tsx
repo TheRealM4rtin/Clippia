@@ -28,8 +28,12 @@ const ReadOnlyWindow: React.FC<ReadOnlyWindowProps> = ({ window, onClose, onUpda
           ref={nodeRef}
           className="window"
           style={{
-            width: window.size.width,
-            height: window.size.height,
+            width: window.size?.width ?? '50vw',
+            height: window.size?.height ?? '60vh',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            minWidth: '300px',
+            minHeight: '200px',
             zIndex: window.zIndex,
           }}
         >

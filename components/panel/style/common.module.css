@@ -1,3 +1,4 @@
+/* Base window styles that all windows will inherit */
 .window {
   background-color: #c0c0c0;
   border: 2px solid #dfdfdf;
@@ -9,16 +10,49 @@
 }
 
 .titleBar {
-  background-color: #000080;
-  color: white;
-  padding: 2px 4px;
+  background: #000080;
+  padding: 3px 2px 3px 3px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .titleBarText {
+  color: white;
   font-weight: bold;
+  margin-left: 2px;
+}
+
+.windowBody {
+  padding: 8px;
+}
+
+/* Common form elements */
+.formInput {
+  width: 100%;
+  padding: 4px;
+  font-family: 'Pixelated MS Sans Serif', Arial;
+  font-size: 11px;
+  border: 1px solid #808080;
+}
+
+.button {
+  font-family: 'Pixelated MS Sans Serif', Arial;
+  font-size: 11px;
+  color: black;
+  background-color: #D4D0C8;
+  border: 1px solid #808080;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.error {
+  color: red;
 }
 
 .titleBarControls {
@@ -36,7 +70,6 @@
   align-items: center;
   justify-content: center;
   color: black;
-  cursor: pointer;
 }
 
 .titleBarControls button:hover {
@@ -46,31 +79,4 @@
 .titleBarControls button:active {
   border-color: #404040 #dfdfdf #dfdfdf #404040;
   background-color: #a0a0a0;
-}
-
-.windowBody {
-  padding: 8px;
-  overflow: auto;
-}
-
-.fileList {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-
-.fileItem {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  cursor: pointer;
-}
-
-.fileItem:hover {
-  background-color: #000080;
-  color: white;
-}
-
-.fileIcon {
-  margin-right: 8px;
 }

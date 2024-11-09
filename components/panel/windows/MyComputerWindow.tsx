@@ -2,14 +2,19 @@ import React, { useRef, useState } from 'react';
 import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
 import { Wmsui323920, Notepad2 } from '@react95/icons';
-import styles from './MyComputerWindow.module.css';
+import commonStyles from '../style/common.module.css';
+import styles from '../style/MyComputerWindow.module.css';
+import { useAuth } from '@/contexts/AuthContext';
 
 const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
   const { updateWindow, removeWindow, addWindow, windows } = useAppStore();
   const nodeRef = useRef<HTMLDivElement>(null);
-  const [currentPath] = useState('C:\\');
+  const { user } = useAuth();
+  const [currentPath] = useState(() => {
+    const userEmail = user?.email || 'anonymous';
+    return `C:\\Users\\${userEmail.split('@')[0]}\\Documents`;
+  });
 
-  // Always bring MyComputer to front when clicked
   const handleClick = () => {
     const highestZIndex = Math.max(...windows.map(w => w.zIndex)) + 1;
     updateWindow(id, { zIndex: highestZIndex });
@@ -21,14 +26,16 @@ const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
 
   const openFile = (title: string, content: string) => {
     const existingWindow = windows.find(w => w.title === title && w.type === 'text');
-    if (existingWindow) {
-      updateWindow(existingWindow.id, { zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 });
+    if (existingWindow?.id) {
+      updateWindow(existingWindow.id, { 
+        zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 
+      });
     } else {
       addWindow({
         title,
         content,
         type: 'text',
-        isReadOnly: true,  // Make these windows read-only
+        isReadOnly: true,
         zIndex: Math.max(...windows.map(w => w.zIndex)) + 1,
       });
     }
@@ -69,18 +76,18 @@ const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
   return (
     <div 
       ref={nodeRef} 
-      className={styles.window}
+      className={commonStyles.window}
       onClick={handleClick}
-      style={{ zIndex: data.zIndex as number }}  // Ensure zIndex is applied
+      style={{ zIndex: data.zIndex as number }}
     >
-      <div className={styles.titleBar}>
-        <div className={styles.titleBarText}>My Computer</div>
+      <div className={commonStyles.titleBar}>
+        <div className={commonStyles.titleBarText}>My Computer</div>
         <div className="title-bar-controls">
           <button aria-label="Close" onClick={handleClose} />
         </div>
       </div>
-      <div className={styles.windowBody}>
-        <p>Current path: {currentPath}</p>
+      <div className={commonStyles.windowBody}>
+        <p>{currentPath}</p>
         <ul className={styles.fileList}>
           <li className={styles.fileItem}>
             <Wmsui323920 className={styles.fileIcon} />

@@ -9,6 +9,7 @@ import './tiptap.css';
 import '@react95/core/GlobalStyle';
 import '@react95/core/themes/win95.css';
 import React from 'react';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const geistSans = localFont({
@@ -36,7 +37,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <Analytics />
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

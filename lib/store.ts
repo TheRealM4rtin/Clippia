@@ -10,6 +10,7 @@ import {
   EdgeChange,
 } from '@xyflow/react';
 import { Window } from '@/types/window';
+import { User } from '@supabase/supabase-js';
 
 interface AppState {
   // React Flow State
@@ -40,6 +41,9 @@ interface AppState {
   scale: number;
   setPosition: (position: { x: number; y: number }) => void;
   setScale: (scale: number) => void;
+  
+  user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -79,6 +83,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // Find windows near the viewport center with a larger radius
     const windowsNearby = currentWindows.filter(w => {
+      if (!w.position) return false;
+      
       const distance = Math.sqrt(
         Math.pow(w.position.x - centerX, 2) + 
         Math.pow(w.position.y - centerY, 2)
@@ -174,4 +180,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   scale: 1,
   setPosition: (position) => set({ position }),
   setScale: (scale) => set({ scale }),
+
+  user: null,
+  setUser: (user) => set({ user }),
 }));

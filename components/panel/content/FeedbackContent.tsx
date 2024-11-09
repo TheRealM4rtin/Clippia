@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RadioButton } from '@react95/core';
-import styles from './Feedback.module.css';
+import styles from '../style/FeedbackWindow.module.css';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FeedbackProps {
   width: number;
 }
 
 const Feedback: React.FC<FeedbackProps> = ({ width }) => {
+  const { user } = useAuth();
   const [username, setUsername] = useState('');
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,8 +17,11 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   const [wouldContribute, setWouldContribute] = useState<string | null>(null);
   const [contributionDetails, setContributionDetails] = useState('');
 
-  // Remove the user property
-  // const { user } = useAppStore();
+  useEffect(() => {
+    if (user?.email) {
+      setUsername(user.email);
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +40,6 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
           feedback, 
           wouldContribute, 
           contributionDetails: wouldContribute === 'yes' ? contributionDetails : null,
-          // Remove userId from the request body
         }),
       });
       if (response.ok) {
@@ -53,7 +57,6 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   };
 
   const resetForm = () => {
-    setUsername('');
     setFeedback('');
     setWouldContribute(null);
     setContributionDetails('');
@@ -75,7 +78,7 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         placeholder="Your username"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !!user}
       />
       <textarea
         value={feedback}

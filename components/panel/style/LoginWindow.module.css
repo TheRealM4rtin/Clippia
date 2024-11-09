@@ -1,0 +1,51 @@
+.loginTab {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.verificationBanner {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.verifyButton {
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.verifyButton:hover:not(:disabled) {
+  background-color: #0051b3;
+}
+
+.verifyButton:disabled,
+.textButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.verificationMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.9em;
+}
+  
