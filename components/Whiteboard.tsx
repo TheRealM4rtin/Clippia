@@ -14,11 +14,13 @@ import TextWindow from './TextWindow'
 import MyComputerWindow from './MyComputerWindow'
 import Panel from './panel/Panel'
 import styles from './whiteboard.module.css'  // Make sure to import the styles
+import FeedbackWindow from './FeedbackWindow';
 
 // Define node types with correct keys matching the window types
 const nodeTypes = {
   text: TextWindow,
-  myComputer: MyComputerWindow
+  myComputer: MyComputerWindow,
+  feedback: FeedbackWindow
 } as const;
 
 // Create a separate component for the Flow content

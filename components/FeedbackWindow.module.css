@@ -1,0 +1,35 @@
+/* .window {
+    background: #c0c0c0;
+    position: absolute;
+    border: 1px solid #000;
+    box-shadow: 1px 1px 0 1px #ffffff inset, -1px -1px 0 1px #868a8e inset;
+    min-width: 400px;
+  } */
+  
+  .window {
+    background-color: #c0c0c0;
+    border: 2px solid #dfdfdf;
+    border-right-color: #404040;
+    border-bottom-color: #404040;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    font-family: 'Pixelated MS Sans Serif', Arial;
+    font-size: 11px;
+  }
+  
+  .titleBar {
+    background: #000080;
+    padding: 3px 2px 3px 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .titleBarText {
+    color: white;
+    font-weight: bold;
+    margin-left: 2px;
+  }
+  
+  .windowBody {
+    padding: 8px;
+  }

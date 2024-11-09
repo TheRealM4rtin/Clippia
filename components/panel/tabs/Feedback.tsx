@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RadioButton } from '@react95/core';
 import styles from './Feedback.module.css';
+import { createClient } from '@/utils/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 interface FeedbackProps {
   width: number;
@@ -14,9 +16,32 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   const [error, setError] = useState('');
   const [wouldContribute, setWouldContribute] = useState<string | null>(null);
   const [contributionDetails, setContributionDetails] = useState('');
+  const [user, setUser] = useState<User | null>(null);
 
-  // Remove the user property
-  // const { user } = useAppStore();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      if (user?.email) {
+        setUsername(user.email);
+      }
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user?.email) {
+        setUsername(session.user.email);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +60,6 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
           feedback, 
           wouldContribute, 
           contributionDetails: wouldContribute === 'yes' ? contributionDetails : null,
-          // Remove userId from the request body
         }),
       });
       if (response.ok) {
@@ -53,7 +77,9 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
   };
 
   const resetForm = () => {
-    setUsername('');
+    if (!user) {
+      setUsername('');
+    }
     setFeedback('');
     setWouldContribute(null);
     setContributionDetails('');
@@ -75,7 +101,7 @@ const Feedback: React.FC<FeedbackProps> = ({ width }) => {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         placeholder="Your username"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !!user}
       />
       <textarea
         value={feedback}

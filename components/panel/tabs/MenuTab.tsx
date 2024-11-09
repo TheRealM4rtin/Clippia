@@ -1,6 +1,6 @@
 import React from 'react'
 import ButtonPanel from '@/components/ButtonPanel'
-import { Computer } from '@react95/icons';
+import { Computer, Mail } from '@react95/icons';
 import styles from './MenuTab.module.css'
 import { useAppStore } from '@/lib/store'
 import { useReactFlow } from '@xyflow/react'
@@ -66,12 +66,30 @@ const MenuTab: React.FC<MenuTabProps> = ({ width }) => {
     });
   };
 
+  const handleOpenFeedback = () => {
+    const existingFeedback = windows.find(w => w.type === 'feedback');
+    if (existingFeedback) {
+      removeWindow(existingFeedback.id);
+    } else {
+      addWindow({
+        title: 'Feedback.exe',
+        content: '',
+        type: 'feedback',
+        zIndex: windows.length + 1,
+      });
+    }
+  };
+
   return (
     <div className={styles.menuTab} style={{ width: width - 12 }}>
       <div className={styles.section}>
         <div className={styles.computerIcon} onClick={handleOpenMyComputer}>
           <Computer className={styles.icon} />
           <span>My Computer</span>
+        </div>
+        <div className={styles.computerIcon} onClick={handleOpenFeedback}>
+          <Mail className={styles.icon} />
+          <span>Feedback.exe</span>
         </div>
       </div>
 

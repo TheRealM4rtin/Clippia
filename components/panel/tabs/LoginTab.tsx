@@ -5,8 +5,8 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import styles from './LoginTab.module.css';
 import { z } from 'zod';
-import { signUp, checkVerificationStatus, resendVerificationEmail } from '@/lib/auth';
-import { differenceInDays, differenceInHours } from 'date-fns';
+import { signUp } from '@/lib/auth';
+import { User } from '@supabase/supabase-js';
 
 const passwordSchema = z.string()
   .min(8, 'Password must be at least 8 characters')
@@ -19,75 +19,22 @@ interface LoginTabProps {
   width: number;
 }
 
-interface VerificationStatus {
-  isVerified: boolean;
-  timeRemaining: string;
-}
 
 const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const router = useRouter();
-  const supabase = createClient();
-  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
-    isVerified: true,
-    timeRemaining: ''
-  });
   const [loading, setLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-
-  const checkVerificationStatus = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('email_verification_deadline')
-      .eq('id', user.id)
-      .single();
-
-    if (profile) {
-      if (!profile.email_verification_deadline) {
-        const deadline = new Date(Date.now() + (3 * 24 * 60 * 60 * 1000));
-        await supabase
-          .from('profiles')
-          .update({ email_verification_deadline: deadline.toISOString() })
-          .eq('id', user.id);
-        profile.email_verification_deadline = deadline.toISOString();
-      }
-
-      const deadline = new Date(profile.email_verification_deadline);
-      const now = new Date();
-      const days = differenceInDays(deadline, now);
-      const hours = differenceInHours(deadline, now) % 24;
-
-      let timeRemaining = '';
-      if (days > 0) {
-        timeRemaining = `${days} days and ${hours} hours`;
-      } else if (hours > 0) {
-        timeRemaining = `${hours} hours`;
-      } else {
-        timeRemaining = 'Time expired';
-      }
-
-      setVerificationStatus({
-        isVerified: false,
-        timeRemaining
-      });
-    }
-  }, [supabase]);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+  const supabase = createClient()
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      if (user) {
-        checkVerificationStatus();
-      }
     };
 
     getUser();
@@ -95,7 +42,6 @@ const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkVerificationStatus();
         router.refresh();
       }
     });
@@ -103,7 +49,7 @@ const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, router, checkVerificationStatus]);
+  }, [supabase, router]);
 
   const validateInput = () => {
     try {
@@ -128,69 +74,76 @@ const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
     setError(null);
     setLoading(true);
 
-    if (!validateInput()) {
-      setLoading(false);
-      return;
-    }
-
     try {
       if (isRegistering) {
-        const { data, error } = await signUp(email, password);
-        
-        if (error) {
-          setError(error);
+        const { data: existingUser, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .single();
+
+        if (existingUser) {
+          setError('An account with this email already exists. Please log in instead.');
+          setLoading(false);
           return;
         }
 
-        if (!data?.user) {
-          setError('Registration failed. Please try again.');
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking existing user:', checkError);
+          setError('An error occurred. Please try again.');
+          setLoading(false);
+          return;
         }
+
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          }
+        });
+
+        if (signUpError) {
+          setError(signUpError.message);
+          return;
+        }
+
+        setError('Please check your email to verify your account.');
+        clearForm();
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password
         });
 
-        if (error) throw error;
+        if (signInError) {
+          setError(signInError.message);
+          return;
+        }
+
+        clearForm();
         router.refresh();
       }
     } catch (error) {
       console.error('Auth error:', error);
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const sendVerificationEmail = async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) {
-        throw new Error('No user email found');
-      }
+  const clearForm = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setError(null);
+    setIsRegistering(false);
+  };
 
-      const response = await supabase.functions.invoke('send-email', {
-        body: {
-          email: user.email,
-          redirectUrl: `${window.location.origin}/auth/callback`,
-          userId: user.id
-        },
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_EDGE_FUNCTION_PUBLIC_KEY}`
-        }
-      });
-
-      if (response.error) throw response.error;
-      
-      setEmailSent(true);
-      setError('Verification email sent! Please check your inbox and spam folder.');
-    } catch (error) {
-      setError('Error sending verification email. Please try again later.');
-      console.error('Verification email error:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    clearForm();
+    router.refresh();
   };
 
   return (
@@ -198,25 +151,8 @@ const LoginTab: React.FC<LoginTabProps> = ({ width }) => {
       {user ? (
         <div className={styles.welcomeMessage}>
           <p>Welcome, {user.email}!</p>
-          {!verificationStatus.isVerified && verificationStatus.timeRemaining && (
-            <p className={styles.verificationMessage}>
-              Time remaining to verify email: {verificationStatus.timeRemaining}
-              {!emailSent && (
-                <button
-                  onClick={sendVerificationEmail}
-                  disabled={loading}
-                  className={styles.textButton}
-                >
-                  {loading ? 'Sending...' : 'Resend verification email'}
-                </button>
-              )}
-            </p>
-          )}
           <button 
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.refresh();
-            }}
+            onClick={handleSignOut}
             className={styles.submitButton}
           >
             Sign Out

@@ -7,7 +7,7 @@ import styles from './MyComputerWindow.module.css';
 const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
   const { updateWindow, removeWindow, addWindow, windows } = useAppStore();
   const nodeRef = useRef<HTMLDivElement>(null);
-  const [currentPath] = useState('C:\\');
+  const [currentPath] = useState('C:\\'); // !! add email address !!
 
   // Always bring MyComputer to front when clicked
   const handleClick = () => {
