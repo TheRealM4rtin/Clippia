@@ -40,3 +40,55 @@
   font-size: 11px;
   margin-top: 10px;
 }
+
+.verificationBanner {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.verificationBanner p {
+  margin: 0 0 0.75rem 0;
+}
+
+.verificationBanner strong {
+  color: #664d03;
+}
+
+.verifyButton {
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.verifyButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.verifyButton:hover:not(:disabled) {
+  background-color: #0051b3;
+}
+
+.textButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.verificationMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.9em;
+}

@@ -1,19 +1,90 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/client'
+import { addDays } from 'date-fns'
+import logger from '@/lib/logger'
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+const supabase = createClient()
 
-export const signIn = async (email: string, password: string) => {
-  const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return user;
+export const signUp = async (email: string, password: string) => {
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      }
+    });
+
+    if (authError) throw authError;
+
+    if (authData.user) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          email_verification_deadline: new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)).toISOString() 
+        })
+        .eq('id', authData.user.id);
+
+      if (updateError) {
+        console.error('Error setting verification deadline:', updateError);
+      }
+
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) throw signInError;
+      return { data: signInData, error: null };
+    }
+
+    throw new Error('No user data returned from signup');
+  } catch (error) {
+    console.error('Signup error:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred'
+    };
+  }
 };
 
-export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
-};
+export const checkVerificationStatus = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-};
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('verification_deadline, email_verified')
+      .eq('id', user.id)
+      .single()
+
+    return profile
+  } catch (error) {
+    logger.error('Verification check error:', error)
+    return null
+  }
+}
+
+export const resendVerificationEmail = async (email: string) => {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+
+    if (error) {
+      logger.error('Resend verification error:', error)
+      return { error }
+    }
+
+    return { error: null }
+  } catch (error) {
+    logger.error('Resend verification error:', error)
+    return {
+      error: error instanceof Error ? error.message : 'Failed to resend verification email'
+    }
+  }
+}
