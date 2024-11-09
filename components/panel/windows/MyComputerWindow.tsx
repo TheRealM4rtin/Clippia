@@ -4,11 +4,16 @@ import { useAppStore } from '@/lib/store';
 import { Wmsui323920, Notepad2 } from '@react95/icons';
 import commonStyles from '../style/common.module.css';
 import styles from '../style/MyComputerWindow.module.css';
+import { useAuth } from '@/contexts/AuthContext';
 
 const MyComputerWindow: React.FC<NodeProps> = ({ id, data }) => {
   const { updateWindow, removeWindow, addWindow, windows } = useAppStore();
   const nodeRef = useRef<HTMLDivElement>(null);
-  const [currentPath] = useState('C:\\');
+  const { user } = useAuth();
+  const [currentPath] = useState(() => {
+    const userEmail = user?.email || 'anonymous';
+    return `C:\\Users\\${userEmail.split('@')[0]}\\Documents`;
+  });
 
   const handleClick = () => {
     const highestZIndex = Math.max(...windows.map(w => w.zIndex)) + 1;
