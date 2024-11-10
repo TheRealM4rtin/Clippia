@@ -25,7 +25,7 @@ const LoginWindow: React.FC<NodeProps> = ({ id, data }) => {
       style={{ zIndex: data.zIndex as number }}
     >
       <div className={commonStyles.titleBar}>
-        <div className={commonStyles.titleBarText}>Connect.exe</div>
+        <div className={commonStyles.titleBarText}>Connect to Clippia Cloud</div>
         <div className="title-bar-controls">
           <button aria-label="Close" onClick={handleClose} />
         </div>

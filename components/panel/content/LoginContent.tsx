@@ -28,6 +28,7 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   const router = useRouter();
 
   const { user } = useAuth();
@@ -78,7 +79,7 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
           return;
         }
 
-        setError('Please check your email to verify your account.');
+        setRegistrationComplete(true);
         clearForm();
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -128,22 +129,34 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
             Sign Out
           </button>
         </div>
+      ) : registrationComplete ? (
+        <div className={styles.successMessage}>
+          <p>✉️ Please check your email to verify your account.</p>
+        </div>
       ) : (
         <>
-          <div className={styles.modeToggle}>
-            <button 
-              className={!isRegistering ? styles.active : ''} 
-              onClick={() => setIsRegistering(false)}
-            >
-              Login
-            </button>
-            <button 
-              className={isRegistering ? styles.active : ''} 
-              onClick={() => setIsRegistering(true)}
-            >
-              Register
-            </button>
-          </div>
+          <fieldset className={styles.authToggle}>
+            <div className={styles.fieldRow}>
+              <input 
+                id="loginRadio" 
+                type="radio" 
+                name="auth-option"
+                checked={!isRegistering}
+                onChange={() => setIsRegistering(false)}
+              />
+              <label htmlFor="loginRadio">Login</label>
+            </div>
+            <div className={styles.fieldRow}>
+              <input 
+                id="registerRadio" 
+                type="radio" 
+                name="auth-option"
+                checked={isRegistering}
+                onChange={() => setIsRegistering(true)}
+              />
+              <label htmlFor="registerRadio">Register</label>
+            </div>
+          </fieldset>
 
           <form onSubmit={handleSubmit}>
             <div className={styles.inputGroup}>
