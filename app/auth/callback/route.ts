@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     // Handle PKCE token
     if (token && token.startsWith('pkce_')) {
       logger.info('Processing PKCE token')
-      const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(token)
+      const { error: sessionError } = await supabase.auth.exchangeCodeForSession(token)
       
       if (sessionError) {
         logger.error('PKCE exchange error:', sessionError)
