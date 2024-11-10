@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import { Markdown } from 'tiptap-markdown';
+import BulletList from '@tiptap/extension-bullet-list';
 
 interface WindowData {
   size?: {
@@ -21,7 +22,15 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        bulletList: {},  // Provide an empty object or specific configuration options
+        bulletList: false,
+      }),
+      BulletList.configure({
+        HTMLAttributes: {
+          class: 'custom-bullet-list',
+        },
+        keepMarks: true,
+        keepAttributes: true,
+        itemTypeName: 'listItem',
       }),
       Markdown,
       Link.configure({
@@ -192,10 +201,12 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       >
         <EditorContent 
           editor={editor}
+          className="tiptap-editor"
           style={{
             flex: 1,
             overflow: 'auto',
             height: '100%',
+            position: 'relative',
           }}
         />
       </div>

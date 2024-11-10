@@ -4,7 +4,7 @@ import localFont from 'next/font/local';
 import '98.css';  // Add this import
 import './globals.css';
 import "xp.css/dist/98.css";
-import './tiptap.css';
+import '@/app/tiptap.css';
 
 import '@react95/core/GlobalStyle';
 import '@react95/core/themes/win95.css';
