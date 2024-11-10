@@ -3,7 +3,20 @@ import type { NextRequest } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-  // Redirect from clippia.io to www.clippia.io
+  const url = new URL(request.url)
+  
+  // Handle root path with error parameters
+  if (url.pathname === '/' && (url.searchParams.has('error') || url.searchParams.has('error_code'))) {
+    const error = url.searchParams.get('error')
+    const error_description = url.searchParams.get('error_description')
+    
+    // Redirect to auth-error page
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(error || '')}&description=${encodeURIComponent(error_description || '')}`
+    )
+  }
+
+  // Handle domain redirect
   if (request.headers.get('host') === 'clippia.io') {
     return NextResponse.redirect(
       `https://www.clippia.io${request.nextUrl.pathname}${request.nextUrl.search}`

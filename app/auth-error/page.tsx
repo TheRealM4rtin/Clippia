@@ -1,16 +1,15 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 
-export default function AuthError() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const error = searchParams.get('error')
   const description = searchParams.get('description')
 
   useEffect(() => {
-    // Automatically redirect to home after 5 seconds
     const timeout = setTimeout(() => {
       router.push('/')
     }, 5000)
@@ -53,5 +52,24 @@ export default function AuthError() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthError() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="window">
+          <div className="title-bar">
+            <div className="title-bar-text">Loading...</div>
+          </div>
+          <div className="window-body">
+            <p>Please wait...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   )
 }

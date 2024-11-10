@@ -66,16 +66,15 @@ const LoginContent: React.FC<LoginTabProps> = ({ width }) => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: 'https://www.clippia.io/auth/callback',
+            data: {
+              email_confirmed: false,
+            }
           }
         });
 
         if (signUpError) {
-          if (signUpError.message.toLowerCase().includes('email already registered')) {
-            setError('An account with this email already exists. Please log in instead.');
-          } else {
-            setError(signUpError.message);
-          }
+          setError(signUpError.message);
           return;
         }
 

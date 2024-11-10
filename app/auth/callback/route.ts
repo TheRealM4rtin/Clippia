@@ -10,42 +10,42 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
+    const token = requestUrl.searchParams.get('token')
+    const type = requestUrl.searchParams.get('type')
     
-    // If there's no code, redirect to auth-error
-    if (!code) {
-      logger.error('No code provided in callback')
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=missing_code&description=No verification code was provided`
-      )
-    }
-
     const supabase = createClient()
-    
-    // Exchange code for session
-    const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
-    
-    if (sessionError) {
-      logger.error('Session exchange error:', sessionError)
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(sessionError.name)}&description=${encodeURIComponent(sessionError.message)}`
-      )
+
+    // Handle token verification
+    if (token && type === 'signup') {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'signup'
+      })
+
+      if (verifyError) {
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=verification_failed&description=${encodeURIComponent(verifyError.message)}`
+        )
+      }
     }
 
-    if (!sessionData.session || !sessionData.user) {
-      logger.error('No session or user data returned')
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=no_session&description=No session data was returned`
-      )
+    // Handle code exchange
+    if (code) {
+      const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (sessionError) {
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=session_error&description=${encodeURIComponent(sessionError.message)}`
+        )
+      }
     }
 
-    // If everything is successful, redirect to home
+    // Successful verification
     return NextResponse.redirect(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.clippia.io')
-    
   } catch (error) {
     logger.error('Auth callback error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=server_error&description=${encodeURIComponent(errorMessage)}`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=server_error&description=${encodeURIComponent((error as Error).message || 'An unexpected error occurred')}`
     )
   }
 }
