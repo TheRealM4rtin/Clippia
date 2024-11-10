@@ -9,6 +9,7 @@ import { Markdown } from 'tiptap-markdown';
 import BulletList from '@tiptap/extension-bullet-list';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { all, createLowlight } from 'lowlight'
+import HorizontalRule from '@tiptap/extension-horizontal-rule';
 
 // Register commonly used languages
 const lowlight = createLowlight(all)
@@ -47,6 +48,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
         keepAttributes: true,
         itemTypeName: 'listItem',
       }),
+      HorizontalRule,
       Markdown,
       Link.configure({
         openOnClick: false,
