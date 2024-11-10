@@ -4,36 +4,28 @@ import logger from '@/lib/logger'
 const supabase = createClient()
 
 export const signUp = async (email: string, password: string) => {
+  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+  console.log('Redirect URL:', redirectTo) // Debug log
+
   try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        emailRedirectTo: redirectTo,
       }
-    });
+    })
 
-    if (authError) throw authError;
-
-    if (authData.user) {
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (signInError) throw signInError;
-      return { data: signInData, error: null };
-    }
-
-    throw new Error('No user data returned from signup');
+    if (error) throw error
+    return { data, error: null }
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error('Signup error:', error)
     return {
       data: null,
       error: error instanceof Error ? error.message : 'An unexpected error occurred'
-    };
+    }
   }
-};
+}
 
 export const checkVerificationStatus = async () => {
   try {

@@ -7,15 +7,22 @@ import logger from '@/lib/logger'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
+  const requestUrl = new URL(request.url)
+  logger.info('Auth callback initiated', {
+    url: request.url,
+    params: Object.fromEntries(requestUrl.searchParams)
+  })
+
   try {
-    const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
     const error = requestUrl.searchParams.get('error')
     const error_description = requestUrl.searchParams.get('error_description')
 
-    // Handle incoming error parameters
+    // Log the initial state
+    logger.info('Auth callback parameters', { code, error, error_description })
+
     if (error || error_description) {
-      logger.error('Auth callback received error:', { error, error_description })
+      logger.error('Auth callback received error params', { error, error_description })
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(error || '')}&description=${encodeURIComponent(error_description || '')}`
       )
@@ -30,48 +37,36 @@ export async function GET(request: Request) {
 
     const supabase = createClient()
     
-    // Exchange code for session with error handling
+    // Log before session exchange
+    logger.info('Attempting to exchange code for session')
+    
     const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
     
     if (sessionError) {
-      logger.error('Session exchange error:', sessionError)
+      logger.error('Session exchange error:', {
+        error: sessionError,
+        code: code
+      })
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(sessionError.name)}&description=${encodeURIComponent(sessionError.message)}`
       )
     }
 
-    if (!sessionData.session || !sessionData.user) {
-      logger.error('No session or user data returned')
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=no_session&description=No session data returned`
-      )
-    }
-
-    try {
-      // Update user profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({ 
-          id: sessionData.user.id,
-          email_verified: true,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'id'
-        })
-
-      if (profileError) {
-        logger.error('Profile update error:', profileError)
-        // Continue with redirect even if profile update fails
-      }
-    } catch (profileError) {
-      logger.error('Profile update error:', profileError)
-      // Continue with redirect even if profile update fails
-    }
+    // Log successful session exchange
+    logger.info('Session exchange successful', {
+      userId: sessionData.user?.id
+    })
 
     // Successful verification - redirect to home
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}`)
+    const redirectUrl = new URL('/', process.env.NEXT_PUBLIC_SITE_URL)
+    logger.info('Redirecting to:', redirectUrl.toString())
+    return NextResponse.redirect(redirectUrl)
+
   } catch (error) {
-    logger.error('Unexpected auth callback error:', error)
+    logger.error('Unexpected auth callback error:', {
+      error,
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=server_error&description=${encodeURIComponent((error as Error).message || 'An unexpected error occurred')}`
     )
