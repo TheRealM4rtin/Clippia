@@ -7,21 +7,19 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url)
-    const token = requestUrl.searchParams.get('token')
+    const code = requestUrl.searchParams.get('token') // Get as code instead of token
     const type = requestUrl.searchParams.get('type')
     const error = requestUrl.searchParams.get('error')
     const errorDescription = requestUrl.searchParams.get('error_description')
     
-    // Log incoming request details for debugging
     logger.info('Auth callback request:', {
       url: request.url,
-      token: token ? '[REDACTED]' : 'none',
       type,
       error,
-      errorDescription
+      errorDescription,
+      hasCode: !!code
     })
 
-    // If there's an error in the URL, redirect to error page
     if (error || errorDescription) {
       return NextResponse.redirect(
         `https://www.clippia.io/auth-error?error=${encodeURIComponent(error || '')}&description=${encodeURIComponent(errorDescription || '')}`
@@ -30,30 +28,27 @@ export async function GET(request: Request) {
 
     const supabase = createClient()
 
-    // Handle email verification with token
-    if (token && type === 'signup') {
-      logger.info('Attempting token verification')
+    // Handle both signup verification and magic links
+    if (code) {
+      logger.info('Processing authentication code')
       
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: 'signup'
-      })
+      const { error: signInError } = await supabase.auth.exchangeCodeForSession(code)
 
-      if (verifyError) {
-        logger.error('Token verification error:', verifyError)
+      if (signInError) {
+        logger.error('Authentication error:', signInError)
         return NextResponse.redirect(
-          `https://www.clippia.io/auth-error?error=verification_failed&description=${encodeURIComponent(verifyError.message)}`
+          `https://www.clippia.io/auth-error?error=auth_failed&description=${encodeURIComponent(signInError.message)}`
         )
       }
 
-      // Successful verification
+      // After successful verification/signin, redirect to home
       return NextResponse.redirect('https://www.clippia.io/')
     }
 
-    // No token or unsupported type
-    logger.error('Invalid callback parameters')
+    // No code present
+    logger.error('No authentication code found')
     return NextResponse.redirect(
-      'https://www.clippia.io/auth-error?error=invalid_request&description=Invalid or missing authentication parameters'
+      'https://www.clippia.io/auth-error?error=invalid_request&description=Missing authentication code'
     )
   } catch (error) {
     logger.error('Auth callback error:', error)
