@@ -1,7 +1,93 @@
-p.is-editor-empty:first-child::before {
+// Editor base styles
+.ProseMirror {
+  min-height: 100px;
+  padding: 0.3rem;
+  
+  &:focus {
+    outline: none;
+  }
+
+  // Placeholder styles
+  p.is-editor-empty:first-child::before {
     color: var(--gray-4);
     content: attr(data-placeholder);
     float: left;
     height: 0;
     pointer-events: none;
   }
+
+  // Code block styles
+  pre {
+    background: #1e1e1e; // VS Code-like dark theme
+    color: #d4d4d4;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    padding: 0.75em 1em;
+    border-radius: 4px;
+    margin: 0.5em 0;
+    position: relative;
+    overflow-x: auto;
+    font-size: 0.9em;
+    line-height: 1.5;
+
+    // Language label
+    &::after {
+      content: attr(data-language);
+      position: absolute;
+      bottom: 3px;
+      right: 5px;
+      font-size: 0.7em;
+      font-style: italic;
+      color: #6a737d;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 2px 5px;
+      border-radius: 3px;
+      text-transform: lowercase;
+    }
+
+    // Default label for no language specified
+    &:not([data-language])::after,
+    &[data-language=""]::after {
+      content: 'plain text';
+    }
+
+    code {
+      display: block;
+      padding: 0;
+      margin: 0;
+      background: none;
+      white-space: pre;
+      font-family: inherit;
+    }
+  }
+}
+
+// Syntax highlighting
+.hljs {
+  &-keyword { color: #569cd6; }
+  &-string { color: #ce9178; }
+  &-comment { color: #6a9955; }
+  &-function { color: #dcdcaa; }
+  &-number { color: #b5cea8; }
+  &-class { color: #4ec9b0; }
+  &-type { color: #569cd6; }
+  &-literal { color: #569cd6; }
+  &-property { color: #9cdcfe; }
+  &-built_in { color: #4ec9b0; }
+  &-operator { color: #d4d4d4; }
+  &-punctuation { color: #d4d4d4; }
+  &-variable { color: #9cdcfe; }
+  
+  // Special highlights
+  &-deletion {
+    background-color: rgba(255, 0, 0, 0.2);
+  }
+  &-addition {
+    background-color: rgba(0, 255, 0, 0.2);
+  }
+  &-emphasis {
+    font-style: italic;
+  }
+  &-strong {
+    font-weight: bold;
+  }
+}

@@ -7,6 +7,11 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import { Markdown } from 'tiptap-markdown';
 import BulletList from '@tiptap/extension-bullet-list';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { all, createLowlight } from 'lowlight'
+
+// Register commonly used languages
+const lowlight = createLowlight(all)
 
 interface WindowData {
   size?: {
@@ -23,6 +28,16 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
     extensions: [
       StarterKit.configure({
         bulletList: false,
+        codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: 'plaintext',
+        languageClassPrefix: 'language-',
+        HTMLAttributes: {
+          class: 'code-block',
+          spellcheck: 'false',
+        },
       }),
       BulletList.configure({
         HTMLAttributes: {

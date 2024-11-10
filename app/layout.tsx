@@ -5,11 +5,13 @@ import '98.css';  // Add this import
 import './globals.css';
 import "xp.css/dist/98.css";
 import '@/app/tiptap.css';
+import 'highlight.js/styles/github.css';  // Add this import
 
 import '@react95/core/GlobalStyle';
 import '@react95/core/themes/win95.css';
 import React from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
+import '@/components/style.scss'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const geistSans = localFont({
