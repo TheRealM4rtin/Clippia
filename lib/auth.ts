@@ -46,12 +46,13 @@ export const checkVerificationStatus = async () => {
 }
 
 export const resendVerificationEmail = async (email: string) => {
+  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
   try {
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        emailRedirectTo: redirectTo
       }
     })
 

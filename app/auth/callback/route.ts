@@ -15,11 +15,13 @@ export async function GET(request: Request) {
 
   try {
     const code = requestUrl.searchParams.get('code')
+    const token = requestUrl.searchParams.get('token')
+    const type = requestUrl.searchParams.get('type')
     const error = requestUrl.searchParams.get('error')
     const error_description = requestUrl.searchParams.get('error_description')
 
     // Log the initial state
-    logger.info('Auth callback parameters', { code, error, error_description })
+    logger.info('Auth callback parameters', { code, token, type, error, error_description })
 
     if (error || error_description) {
       logger.error('Auth callback received error params', { error, error_description })
@@ -28,39 +30,47 @@ export async function GET(request: Request) {
       )
     }
 
-    if (!code) {
-      logger.error('No code provided in callback')
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=no_code&description=No verification code provided`
-      )
-    }
-
     const supabase = createClient()
-    
-    // Log before session exchange
-    logger.info('Attempting to exchange code for session')
-    
-    const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
-    
-    if (sessionError) {
-      logger.error('Session exchange error:', {
-        error: sessionError,
-        code: code
-      })
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(sessionError.name)}&description=${encodeURIComponent(sessionError.message)}`
-      )
-    }
 
-    // Log successful session exchange
-    logger.info('Session exchange successful', {
-      userId: sessionData.user?.id
-    })
+    // Handle token verification if present
+    if (token && type === 'signup') {
+      logger.info('Attempting to verify signup token')
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'signup'
+      })
+
+      if (verifyError) {
+        logger.error('Token verification error:', verifyError)
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(verifyError.name)}&description=${encodeURIComponent(verifyError.message)}`
+        )
+      }
+    }
+    
+    // Handle code exchange if present
+    if (code) {
+      logger.info('Attempting to exchange code for session')
+      const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (sessionError) {
+        logger.error('Session exchange error:', {
+          error: sessionError,
+          code: code
+        })
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/auth-error?error=${encodeURIComponent(sessionError.name)}&description=${encodeURIComponent(sessionError.message)}`
+        )
+      }
+
+      logger.info('Session exchange successful', {
+        userId: sessionData.user?.id
+      })
+    }
 
     // Successful verification - redirect to home
-    const redirectUrl = new URL('/', process.env.NEXT_PUBLIC_SITE_URL)
-    logger.info('Redirecting to:', redirectUrl.toString())
-    return NextResponse.redirect(redirectUrl)
+    logger.info('Redirecting to home page')
+    return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_SITE_URL))
 
   } catch (error) {
     logger.error('Unexpected auth callback error:', {
