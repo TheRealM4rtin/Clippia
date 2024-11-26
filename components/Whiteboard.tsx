@@ -6,6 +6,7 @@ import {
   useReactFlow,
   Panel as FlowPanel,
   ReactFlowProvider,
+  SelectionMode
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css';
 
@@ -72,6 +73,12 @@ const FlowContent = () => {
       minZoom={0.1}
       maxZoom={1.5}
       defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+      panOnDrag={[0]}
+      panOnScroll={false}
+      zoomOnScroll={true}
+      zoomOnPinch={true}
+      selectionMode={SelectionMode.Full}
+      selectNodesOnDrag={false}
       style={{ 
         width: '100%', 
         height: '100vh',

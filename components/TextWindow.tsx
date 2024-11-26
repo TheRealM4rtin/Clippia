@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { Handle, Position, NodeProps, NodeResizeControl } from '@xyflow/react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -7,26 +7,42 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import { Markdown } from 'tiptap-markdown';
 import BulletList from '@tiptap/extension-bullet-list';
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { all, createLowlight } from 'lowlight'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { all, createLowlight } from 'lowlight';
 import HorizontalRule from '@tiptap/extension-horizontal-rule';
-import Image from '@tiptap/extension-image';
+import TiptapImage from '@tiptap/extension-image';
 import Dropcursor from '@tiptap/extension-dropcursor';
 
-// Register commonly used languages
-const lowlight = createLowlight(all)
+const lowlight = createLowlight(all);
 
 interface WindowData {
+  id: string;
+  title: string;
+  content?: string;
+  isReadOnly?: boolean;
+  isNew?: boolean;
   size?: {
-    width?: number;
-    height?: number;
+    width: number;
+    height: number;
   };
-  // ... other properties
+  zIndex?: number;
+  position?: {
+    x: number;
+    y: number;
+  };
 }
 
 const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, selected }) => {
   const { updateWindow, removeWindow } = useAppStore();
+  const [isDragging, setIsDragging] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const { setViewport } = useReactFlow();
+  const draggedImageRef = useRef<string | null>(null);
 
+  // Editor Configuration
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -59,12 +75,13 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       Placeholder.configure({
         placeholder: data.isReadOnly ? '' : 'Type here to start...',
       }),
-      Image.configure({
-        inline: false,
+      TiptapImage.configure({
+        inline: true,
         allowBase64: true,
-        draggable: false,
         HTMLAttributes: {
           class: 'resizable-image',
+          draggable: 'true',
+          style: 'cursor: move',
         },
       }),
       Dropcursor.configure({
@@ -73,195 +90,186 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
     ],
     content: data.content || '',
     editable: !data.isReadOnly,
-    
-    onUpdate: ({ editor }) => {
-      if (!data.isReadOnly) {
-        const html = editor.getHTML();
-        updateWindow(id, { content: html });
+    onCreate: ({ editor }) => {
+      if (data.isNew && !data.isReadOnly) {
+        setTimeout(() => editor.commands.focus('end'), 100);
       }
     },
-    autofocus: false,  // Remove autofocus from here
+    onFocus: () => setIsEditing(true),
+    onBlur: () => setIsEditing(false),
+    onUpdate: ({ editor }) => {
+      if (!data.isReadOnly) {
+        updateWindow(id, { content: editor.getHTML() });
+      }
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm focus:outline-none',
+        spellcheck: 'false',
+      },
+      handleDOMEvents: {
+        mousedown: (view, event) => {
+          event.stopPropagation();
+          return false;
+        },
+        dragstart: (view, event) => {
+          const target = event.target as HTMLElement;
+          if (target.tagName === 'IMG') {
+            draggedImageRef.current = (target as HTMLImageElement).src;
+            return false;
+          }
+          return true;
+        },
+      },
+    },
   });
 
-  useEffect(() => {
-    if (editor && data.isNew && !data.isReadOnly) {
-      setTimeout(() => {
-        editor.commands.focus('end');  // Directly focus the editor
-      }, 0);  // Use a timeout to ensure the editor is ready
-      updateWindow(id, { isNew: false });
+  // Window zooming functionality
+  const zoomToWindow = useCallback(() => {
+    const node = document.getElementById(id);
+    if (node) {
+      const bounds = node.getBoundingClientRect();
+      const padding = 50;
+      const targetZoom = Math.min(
+        (window.innerWidth - padding * 2) / bounds.width,
+        (window.innerHeight - padding * 2) / bounds.height,
+        1.2
+      );
+
+      const x = -(bounds.left + bounds.width / 2 - window.innerWidth / 2) / targetZoom;
+      const y = -(bounds.top + bounds.height / 2 - window.innerHeight / 2) / targetZoom;
+
+      setViewport({ x, y, zoom: targetZoom }, { duration: 800 });
     }
-  }, [editor, data.isNew, data.isReadOnly, id, updateWindow]);
+  }, [id, setViewport]);
 
-  useEffect(() => {
-    if (selected && editor) {
-      editor.commands.focus('end');
-    }
-  }, [selected, editor]);
+  // Image handling functions
+  const processImage = useCallback((imgSrc: string, file?: File) => {
+    const img = new window.Image();
+    img.src = imgSrc;
+    
+    img.onload = () => {
+      if (editor) {
+        const windowWidth = data.size?.width ?? 300;
+        const maxWidth = windowWidth - 40;
+        const ratio = maxWidth / img.width;
+        const width = Math.floor(img.width * ratio);
+        const height = Math.floor(img.height * ratio);
 
-  const handleClose = useCallback(() => {
-    removeWindow(id);
-  }, [id, removeWindow]);
+        editor.chain()
+          .focus()
+          .setImage({
+            src: imgSrc,
+            alt: file?.name || 'Dragged image',
+          })
+          .updateAttributes('image', {
+            width: width,
+            height: height
+          })
+          .insertContent('<p></p>')
+          .focus()
+          .run();
+      }
+    };
+  }, [editor, data.size]);
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (editor) {
-      editor.commands.focus('end');
-    }
-  }, [editor]);
-
+  // Event handlers
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    const files = Array.from(e.dataTransfer.files);
     
-    files.forEach(file => {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result && editor) {
-            // Use the HTML Image constructor instead of TipTap's Image
-            const img = new window.Image();
-            const imageUrl = event.target.result.toString();
-            img.src = imageUrl;
-            
-            img.onload = () => {
-              // Get window dimensions
-              const windowWidth = data.size?.width ?? 300;
-              const windowHeight = data.size?.height ?? 200;
-              
-              // Calculate scaling ratio
-              const maxWidth = windowWidth - 40; // Account for padding
-              const maxHeight = windowHeight - 100; // Account for title bar and padding
-              
-              const widthRatio = maxWidth / img.width;
-              const heightRatio = maxHeight / img.height;
-              const ratio = Math.min(widthRatio, heightRatio, 1); // Don't upscale
-              
-              // Set resized dimensions
-              const width = Math.floor(img.width * ratio);
-              const height = Math.floor(img.height * ratio);
-              
-              // Insert image with calculated dimensions
-              editor.chain()
-                .focus()
-                .setImage({ 
-                  src: imageUrl,
-                  alt: file.name,
-                  // Use HTMLAttributes for dimensions instead of direct props
-                  HTMLAttributes: {
-                    width: width,
-                    height: height,
-                    'data-original-width': img.width,
-                    'data-original-height': img.height
-                  }
-                })
-                .run();
-            };
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }, [editor, data.size]);
-
-  useEffect(() => {
-    if (editor && data.size) {
-      // Find all images in the editor
-      const images = editor.view.dom.getElementsByTagName('img');
-      const windowWidth = data.size.width ?? 300;
-      const maxWidth = windowWidth - 40; // Account for padding
-
-      Array.from(images).forEach(img => {
-        const originalWidth = parseInt(img.getAttribute('data-original-width') || img.width.toString());
-        const originalHeight = parseInt(img.getAttribute('data-original-height') || img.height.toString());
-        
-        // Only store original dimensions once
-        if (!img.hasAttribute('data-original-width')) {
-          img.setAttribute('data-original-width', originalWidth.toString());
-          img.setAttribute('data-original-height', originalHeight.toString());
-        }
-
-        // Calculate new dimensions
-        const ratio = maxWidth / originalWidth;
-        const newWidth = Math.min(originalWidth, maxWidth);
-        const newHeight = Math.floor(originalHeight * ratio);
-
-        // Apply new dimensions if they're different
-        if (img.width !== newWidth) {
-          img.style.width = `${newWidth}px`;
-          img.style.height = `${newHeight}px`;
+    if (e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files);
+      files.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              processImage(event.target.result.toString(), file);
+            }
+          };
+          reader.readAsDataURL(file);
         }
       });
+    } else if (draggedImageRef.current) {
+      processImage(draggedImageRef.current);
+      draggedImageRef.current = null;
     }
-  }, [editor, data.size]);
+  }, [processImage]);
 
-  // Add image resize handler
-  const handleImageResize = useCallback((imageElement: HTMLImageElement, width: number) => {
-    if (editor) {
-      const { state, dispatch } = editor.view;
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    const isZooming = e.ctrlKey || e.metaKey;
+    if (isZooming) return;
+    
+    if (editorRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = editorRef.current;
+      const isAtTop = scrollTop === 0 && e.deltaY < 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight && e.deltaY > 0;
       
-      state.doc.nodesBetween(0, state.doc.content.size, (node, pos) => {
-        if (node.type.name === 'image' && node.attrs.src === imageElement.src) {
-          const height = (width / imageElement.naturalWidth) * imageElement.naturalHeight;
-          
-          dispatch(state.tr.setNodeMarkup(pos, undefined, {
-            ...node.attrs,
-            width: Math.round(width),
-            height: Math.round(height),
-          }));
-          return false;
-        }
-        return true;
-      });
+      if (!isAtTop && !isAtBottom) {
+        e.stopPropagation();
+      }
     }
-  }, [editor]);
+  }, []);
 
-  // Add mouse handlers for image resizing
+  const handleWindowMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 2 || !editorRef.current?.contains(e.target as Node)) {
+      e.stopPropagation();
+      dragStartPosRef.current = { x: e.clientX, y: e.clientY };
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isDragging && dragStartPosRef.current) {
+      const deltaX = Math.abs(e.clientX - dragStartPosRef.current.x);
+      const deltaY = Math.abs(e.clientY - dragStartPosRef.current.y);
+      
+      if (deltaX > 5 || deltaY > 5) {
+        setIsDragging(true);
+      }
+    }
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    dragStartPosRef.current = null;
+    setIsDragging(false);
+  }, []);
+
+  const getCursorStyle = useCallback(() => {
+    if (isDragging) return 'move';
+    if (isEditing) return 'text';
+    return data.isReadOnly ? 'default' : 'text';
+  }, [isDragging, isEditing, data.isReadOnly]);
+
+  // Effects
   useEffect(() => {
-    if (editor) {
-      const editorElement = editor.view.dom;
-      let isResizing = false;
-      let currentImage: HTMLImageElement | null = null;
-      let startX = 0;
-      let startWidth = 0;
-
-      const handleMouseDown = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.classList.contains('image-resize-handle')) {
-          e.preventDefault();
-          isResizing = true;
-          currentImage = target.parentElement?.querySelector('img') || null;
-          startX = e.pageX;
-          startWidth = currentImage?.width || 0;
-        }
-      };
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!isResizing || !currentImage) return;
-        
-        const deltaX = e.pageX - startX;
-        const newWidth = Math.max(50, startWidth + deltaX);
-        handleImageResize(currentImage, newWidth);
-      };
-
-      const handleMouseUp = () => {
-        isResizing = false;
-        currentImage = null;
-      };
-
-      editorElement.addEventListener('mousedown', handleMouseDown);
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-
-      return () => {
-        editorElement.removeEventListener('mousedown', handleMouseDown);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
+    if (data.isNew) {
+      zoomToWindow();
+      setTimeout(() => updateWindow(id, { isNew: false }), 100);
     }
-  }, [editor, handleImageResize]);
+  }, [data.isNew, zoomToWindow, id, updateWindow]);
+
+  useEffect(() => {
+    if (selected && editor && !isDragging) {
+      editor.commands.focus('end');
+    }
+  }, [selected, editor, isDragging]);
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        dragStartPosRef.current = null;
+      }
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [isDragging]);
 
   return (
     <div 
+      ref={windowRef}
       className="window"
       style={{
         width: data.size?.width ?? 300,
@@ -269,105 +277,79 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
         backgroundColor: 'white',
         border: '2px solid #000080',
         position: 'relative',
-        zIndex: typeof data.zIndex === 'number' ? data.zIndex : 1,
+        zIndex: data.zIndex ?? 1,
         outline: selected ? '2px solid #000080' : 'none',
         boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.2)',
+        cursor: getCursorStyle(),
       }}
-      onClick={handleClick}
+      onMouseDown={handleWindowMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onWheel={handleWheel}
+      onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
+      onContextMenu={(e) => e.preventDefault()}
     >
       {!data.isReadOnly && (
         <>
-          {/* Custom resize controls with larger interaction areas */}
           <NodeResizeControl 
             position="top-left" 
             style={{ width: '25px', height: '25px', cursor: 'nw-resize', border: 'none', background: 'transparent' }} 
-            onResize={(event, { width, height }) => {
+            onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
           />
           <NodeResizeControl 
             position="top-right" 
             style={{ width: '25px', height: '25px', cursor: 'ne-resize', border: 'none', background: 'transparent' }} 
-            onResize={(event, { width, height }) => {
+            onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
           />
           <NodeResizeControl 
             position="bottom-left" 
             style={{ width: '25px', height: '25px', cursor: 'sw-resize', border: 'none', background: 'transparent' }} 
-            onResize={(event, { width, height }) => {
+            onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
           />
           <NodeResizeControl 
             position="bottom-right" 
             style={{ width: '25px', height: '25px', cursor: 'se-resize', border: 'none', background: 'transparent' }} 
-            onResize={(event, { width, height }) => {
+            onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
           />
-          <Handle 
-            type="target" 
-            position={Position.Top} 
-            id="top-target"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
-          <Handle 
-            type="source" 
-            position={Position.Top} 
-            id="top-source"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
-          <Handle 
-            type="target" 
-            position={Position.Bottom} 
-            id="bottom-target"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
-          <Handle 
-            type="source" 
-            position={Position.Bottom} 
-            id="bottom-source"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
-          <Handle 
-            type="target" 
-            position={Position.Left} 
-            id="left-target"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
-          <Handle 
-            type="source" 
-            position={Position.Left} 
-            id="left-source"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
-          <Handle 
-            type="target" 
-            position={Position.Right} 
-            id="right-target"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
-          <Handle 
-            type="source" 
-            position={Position.Right} 
-            id="right-source"
-            style={{ visibility: selected ? 'visible' : 'hidden' }} 
-          />
+          {['top', 'bottom', 'left', 'right'].map((pos) => (
+            <React.Fragment key={pos}>
+              <Handle 
+                type="target" 
+                position={pos as Position} 
+                id={`${pos}-target`}
+                style={{ visibility: selected ? 'visible' : 'hidden' }} 
+              />
+              <Handle 
+                type="source" 
+                position={pos as Position} 
+                id={`${pos}-source`}
+                style={{ visibility: selected ? 'visible' : 'hidden' }} 
+              />
+            </React.Fragment>
+          ))}
         </>
       )}
-
-      
       
       <div className="title-bar">
-        <div className="title-bar-text">{data.title as string}</div>
+        <div className="title-bar-text">{data.title}</div>
         <div className="title-bar-controls">
           <button aria-label="Minimize" />
           <button aria-label="Maximize" />
-          <button aria-label="Close" onClick={handleClose} />
+          <button aria-label="Close" onClick={() => removeWindow(id)} />
         </div>
       </div>
+      
       <div 
+        ref={editorRef}
         className="window-body"
         style={{
           margin: 0,
@@ -377,19 +359,19 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          cursor: data.isReadOnly ? 'default' : 'text',
+          cursor: getCursorStyle(),
+          userSelect: isDragging ? 'none' : 'text',
         }}
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
       >
         <EditorContent 
           editor={editor}
-          className="tiptap-editor"
+          className={`tiptap-editor ${isEditing ? 'editing' : ''}`}
           style={{
             flex: 1,
             overflow: 'auto',
             height: '100%',
             position: 'relative',
+            pointerEvents: isDragging ? 'none' : 'auto',
           }}
         />
       </div>
