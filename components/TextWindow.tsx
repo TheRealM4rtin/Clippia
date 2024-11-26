@@ -12,6 +12,8 @@ import { all, createLowlight } from 'lowlight';
 import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import TiptapImage from '@tiptap/extension-image';
 import Dropcursor from '@tiptap/extension-dropcursor';
+import { exportToMarkdown } from '@/lib/exportUtils';
+import { Progman43 } from '@react95/icons';
 
 const lowlight = createLowlight(all);
 
@@ -241,6 +243,13 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
     return data.isReadOnly ? 'default' : 'text';
   }, [isDragging, isEditing, data.isReadOnly]);
 
+  const handleExport = useCallback(async () => {
+    if (editor) {
+      const content = editor.getHTML();
+      await exportToMarkdown(data.title, content);
+    }
+  }, [editor, data.title]);
+
   // Effects
   useEffect(() => {
     if (data.isNew) {
@@ -342,6 +351,24 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       <div className="title-bar">
         <div className="title-bar-text">{data.title}</div>
         <div className="title-bar-controls">
+          <button 
+            aria-label="Export" 
+            onClick={handleExport} 
+            style={{ 
+              marginRight: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2px'
+            }}
+          >
+            <Progman43 
+              style={{ 
+                width: '11px', 
+                height: '11px'
+              }} 
+            />
+          </button>
           <button aria-label="Minimize" />
           <button aria-label="Maximize" />
           <button aria-label="Close" onClick={() => removeWindow(id)} />
