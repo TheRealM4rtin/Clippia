@@ -10,6 +10,8 @@ import BulletList from '@tiptap/extension-bullet-list';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { all, createLowlight } from 'lowlight'
 import HorizontalRule from '@tiptap/extension-horizontal-rule';
+import Image from '@tiptap/extension-image';
+import Dropcursor from '@tiptap/extension-dropcursor';
 
 // Register commonly used languages
 const lowlight = createLowlight(all)
@@ -57,6 +59,17 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       Placeholder.configure({
         placeholder: data.isReadOnly ? '' : 'Type here to start...',
       }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+        draggable: false,
+        HTMLAttributes: {
+          class: 'resizable-image',
+        },
+      }),
+      Dropcursor.configure({
+        class: 'drop-cursor',
+      }),
     ],
     content: data.content || '',
     editable: !data.isReadOnly,
@@ -95,6 +108,157 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       editor.commands.focus('end');
     }
   }, [editor]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result && editor) {
+            // Use the HTML Image constructor instead of TipTap's Image
+            const img = new window.Image();
+            const imageUrl = event.target.result.toString();
+            img.src = imageUrl;
+            
+            img.onload = () => {
+              // Get window dimensions
+              const windowWidth = data.size?.width ?? 300;
+              const windowHeight = data.size?.height ?? 200;
+              
+              // Calculate scaling ratio
+              const maxWidth = windowWidth - 40; // Account for padding
+              const maxHeight = windowHeight - 100; // Account for title bar and padding
+              
+              const widthRatio = maxWidth / img.width;
+              const heightRatio = maxHeight / img.height;
+              const ratio = Math.min(widthRatio, heightRatio, 1); // Don't upscale
+              
+              // Set resized dimensions
+              const width = Math.floor(img.width * ratio);
+              const height = Math.floor(img.height * ratio);
+              
+              // Insert image with calculated dimensions
+              editor.chain()
+                .focus()
+                .setImage({ 
+                  src: imageUrl,
+                  alt: file.name,
+                  // Use HTMLAttributes for dimensions instead of direct props
+                  HTMLAttributes: {
+                    width: width,
+                    height: height,
+                    'data-original-width': img.width,
+                    'data-original-height': img.height
+                  }
+                })
+                .run();
+            };
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }, [editor, data.size]);
+
+  useEffect(() => {
+    if (editor && data.size) {
+      // Find all images in the editor
+      const images = editor.view.dom.getElementsByTagName('img');
+      const windowWidth = data.size.width ?? 300;
+      const maxWidth = windowWidth - 40; // Account for padding
+
+      Array.from(images).forEach(img => {
+        const originalWidth = parseInt(img.getAttribute('data-original-width') || img.width.toString());
+        const originalHeight = parseInt(img.getAttribute('data-original-height') || img.height.toString());
+        
+        // Only store original dimensions once
+        if (!img.hasAttribute('data-original-width')) {
+          img.setAttribute('data-original-width', originalWidth.toString());
+          img.setAttribute('data-original-height', originalHeight.toString());
+        }
+
+        // Calculate new dimensions
+        const ratio = maxWidth / originalWidth;
+        const newWidth = Math.min(originalWidth, maxWidth);
+        const newHeight = Math.floor(originalHeight * ratio);
+
+        // Apply new dimensions if they're different
+        if (img.width !== newWidth) {
+          img.style.width = `${newWidth}px`;
+          img.style.height = `${newHeight}px`;
+        }
+      });
+    }
+  }, [editor, data.size]);
+
+  // Add image resize handler
+  const handleImageResize = useCallback((imageElement: HTMLImageElement, width: number) => {
+    if (editor) {
+      const { state, dispatch } = editor.view;
+      
+      state.doc.nodesBetween(0, state.doc.content.size, (node, pos) => {
+        if (node.type.name === 'image' && node.attrs.src === imageElement.src) {
+          const height = (width / imageElement.naturalWidth) * imageElement.naturalHeight;
+          
+          dispatch(state.tr.setNodeMarkup(pos, undefined, {
+            ...node.attrs,
+            width: Math.round(width),
+            height: Math.round(height),
+          }));
+          return false;
+        }
+        return true;
+      });
+    }
+  }, [editor]);
+
+  // Add mouse handlers for image resizing
+  useEffect(() => {
+    if (editor) {
+      const editorElement = editor.view.dom;
+      let isResizing = false;
+      let currentImage: HTMLImageElement | null = null;
+      let startX = 0;
+      let startWidth = 0;
+
+      const handleMouseDown = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('image-resize-handle')) {
+          e.preventDefault();
+          isResizing = true;
+          currentImage = target.parentElement?.querySelector('img') || null;
+          startX = e.pageX;
+          startWidth = currentImage?.width || 0;
+        }
+      };
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isResizing || !currentImage) return;
+        
+        const deltaX = e.pageX - startX;
+        const newWidth = Math.max(50, startWidth + deltaX);
+        handleImageResize(currentImage, newWidth);
+      };
+
+      const handleMouseUp = () => {
+        isResizing = false;
+        currentImage = null;
+      };
+
+      editorElement.addEventListener('mousedown', handleMouseDown);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+
+      return () => {
+        editorElement.removeEventListener('mousedown', handleMouseDown);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [editor, handleImageResize]);
 
   return (
     <div 
@@ -215,6 +379,8 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
           flexDirection: 'column',
           cursor: data.isReadOnly ? 'default' : 'text',
         }}
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
       >
         <EditorContent 
           editor={editor}

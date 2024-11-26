@@ -224,3 +224,49 @@
 .hljs-strong {
   font-weight: bold;
 }
+
+/* Image styles */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5em auto;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.ProseMirror img:hover {
+  filter: brightness(0.95);
+}
+
+/* Drop cursor styles */
+.drop-cursor {
+  border: 2px dashed #000080;
+  border-radius: 4px;
+  margin: 0.5em 0;
+}
+
+/* Image wrapper for better control */
+.ProseMirror .resizable-image {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* Optional: Add a resize indicator */
+.ProseMirror .resizable-image::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #000080;
+  border-bottom: 2px solid #000080;
+  cursor: se-resize;
+  display: none;
+}
+
+.ProseMirror .resizable-image:hover::after {
+  display: block;
+}
