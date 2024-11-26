@@ -4,6 +4,7 @@ import { Computer, Mail, User } from '@react95/icons';
 import styles from './Panel.module.css';
 import { useAppStore } from '@/lib/store';
 import { useReactFlow } from '@xyflow/react';
+import ColorPicker from '@/components/ColorPicker';
 
 const Panel: React.FC = () => {
   const [panelWidth, setPanelWidth] = useState(250);
@@ -11,8 +12,8 @@ const Panel: React.FC = () => {
     windows, 
     addWindow,
     removeWindow,
-    colorBackground, 
-    toggleColorBackground 
+    backgroundColor,
+    setBackgroundColor
   } = useAppStore();
 
   const { fitView } = useReactFlow();
@@ -104,7 +105,6 @@ const Panel: React.FC = () => {
           <Mail className={styles.icon} />
           <span>Feedback.exe</span>
         </div>
-
       </div>
 
       <div className={styles.divider} />
@@ -125,26 +125,12 @@ const Panel: React.FC = () => {
 
       <div className={styles.section}>
         <p>Color Background:</p>
-        <div className={styles.fieldRow}>
-          <input 
-            id="radio-color-yes" 
-            type="radio" 
-            name="color-background"
-            checked={colorBackground}
-            onChange={toggleColorBackground}
-          />
-          <label htmlFor="radio-color-yes">Yes</label>
-        </div>
-        <div className={styles.fieldRow}>
-          <input 
-            id="radio-color-no" 
-            type="radio" 
-            name="color-background"
-            checked={!colorBackground}
-            onChange={toggleColorBackground}
-          />
-          <label htmlFor="radio-color-no">No</label>
-        </div>
+        <ColorPicker 
+          selectedColor={backgroundColor}
+          onColorChange={(color) => {
+            setBackgroundColor(color);
+          }}
+        />
       </div>
     </div>
   );

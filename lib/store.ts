@@ -44,6 +44,8 @@ interface AppState {
   
   user: User | null;
   setUser: (user: User | null) => void;
+  backgroundColor: string;
+  setBackgroundColor: (color: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -183,4 +185,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   user: null,
   setUser: (user) => set({ user }),
+  backgroundColor: '#FFFFFF',
+  setBackgroundColor: (color: string) => {
+    set({ backgroundColor: color });
+    document.documentElement.style.setProperty('--selected-background-color', color);
+  },
 }));
