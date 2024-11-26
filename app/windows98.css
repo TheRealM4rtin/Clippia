@@ -4,6 +4,9 @@
        url('/fonts/MS-Sans-Serif.woff') format('woff');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @font-face {
@@ -40,6 +43,9 @@
   border-right-color: #dfdfdf;
   border-bottom-color: #dfdfdf;
   padding: 2px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .windows98-text:focus {

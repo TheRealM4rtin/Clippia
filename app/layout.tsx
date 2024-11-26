@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { Analytics } from "@vercel/analytics/react"
 import localFont from 'next/font/local';
-import '98.css';  // Add this import
-import './globals.css';
-import "xp.css/dist/98.css";
+import '98.css';
+import '@/app/globals.css';
+import '@/app/windows98.css';
 import '@/app/tiptap.css';
-import 'highlight.js/styles/github.css';  // Add this import
+import 'highlight.js/styles/github.css';
 
 import '@react95/core/GlobalStyle';
 import '@react95/core/themes/win95.css';

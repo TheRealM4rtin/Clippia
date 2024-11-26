@@ -2,10 +2,55 @@
 .ProseMirror {
   min-height: 100px;
   padding: 0.3rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .ProseMirror:focus {
   outline: none;
+}
+
+/* Heading Styles */
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  font-family: 'MS Sans Serif', Arial, sans-serif;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+  color: #000;
+  line-height: 1.2;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  /* border-bottom: 1px solid #808080; */
+  /* padding-bottom: 0.1em; */
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  /* border-bottom: 1px solid #808080; */
+  /* padding-bottom: 0.3em; */
+}
+
+.ProseMirror h3 {
+  font-size: 1.25em;
+}
+
+.ProseMirror h4 {
+  font-size: 1em;
+}
+
+.ProseMirror h5 {
+  font-size: 0.875em;
+}
+
+.ProseMirror h6 {
+  font-size: 0.85em;
 }
 
 /* Refined Bullet List Styles with rounded bullets */
@@ -31,6 +76,8 @@
   font-size: 0.5rem;
   display: inline-block;
   width: 0.6rem;
+  -webkit-transform: translateY(0.1rem);
+  transform: translateY(0.1rem);
 }
 
 /* Nested list styles */
@@ -66,9 +113,12 @@
   padding: 1rem;
   margin: 0.5rem 0;
   position: relative;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: 'Menlo', 'Monaco', 'Courier New', Consolas, monospace;
   font-size: 0.9rem;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
 }
 
 /* Language label positioning */

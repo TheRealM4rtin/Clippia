@@ -15,6 +15,9 @@ body {
   font-family: 'MS Sans Serif', Arial, sans-serif;
   font-size: 12px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 canvas {
@@ -63,6 +66,11 @@ canvas {
   left: 10px; /* Adjust as necessary */
 }
 
+.title-bar-controls button {
+  background-color: #c0c0c0;
+}
+
+
 /* Add any other global styles you need */
 
 /* Add this at the end of your existing CSS */
@@ -95,3 +103,13 @@ canvas {
 .react-flow__node {
   z-index: 2;
 }
+
+/* Add this to handle different pixel ratios */
+@media screen and (-webkit-min-device-pixel-ratio: 1.25), 
+       screen and (min-resolution: 120dpi) {
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+

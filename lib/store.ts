@@ -89,13 +89,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         Math.pow(w.position.x - centerX, 2) + 
         Math.pow(w.position.y - centerY, 2)
       );
-      return distance < 200; // Increased detection radius
+      return distance < 1000;
     });
 
     // Calculate offset based on the number of nearby windows
     const baseOffset = 30;
-    const maxWindows = 10; // Reset pattern after this many windows
-    const offsetIndex = windowsNearby.length % maxWindows;
+    // const maxWindows = 10;
+    const offsetIndex = windowsNearby.length; // % maxWindows;
     const offset = offsetIndex * baseOffset;
 
     // Final position with offset
