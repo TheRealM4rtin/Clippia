@@ -1,0 +1,130 @@
+.latex-node {
+  display: inline-block;
+  cursor: pointer;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin: 0 2px;
+  position: relative;
+}
+
+.latex-node:hover,
+.latex-node.hovered,
+.latex-node:focus,
+.latex-node:focus-within {
+  border-color: #000080;
+  background-color: rgba(0, 0, 128, 0.1);
+  outline: none;
+}
+
+.latex-node.selected {
+  border-color: #000080;
+  background-color: rgba(0, 0, 128, 0.1);
+}
+
+.latex-node.block {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+  padding: 8px;
+}
+
+.latex-node.block > .latex-content {
+  display: block;
+}
+
+.latex-editor {
+  display: inline-block;
+  min-width: 200px;
+}
+
+.latex-editor.block {
+  display: block;
+  margin: 1em 0;
+}
+
+.latex-editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #000080;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.latex-input {
+  font-family: monospace;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  min-width: 200px;
+  resize: vertical;
+  background: white;
+  font-size: 14px;
+}
+
+.latex-input:focus {
+  border-color: #000080;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 0, 128, 0.1);
+}
+
+.latex-editor-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.latex-editor-buttons button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.latex-editor-buttons .save-button {
+  background-color: #000080;
+  color: white;
+  border-color: #000080;
+}
+
+.latex-editor-buttons .save-button:hover {
+  background-color: #000066;
+}
+
+.latex-editor-buttons .delete-button {
+  background-color: white;
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.latex-editor-buttons .delete-button:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.latex-error {
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.latex-error:hover,
+.latex-error.hovered {
+  background-color: rgba(220, 53, 69, 0.2);
+}
+
+.ProseMirror-focused .latex-node:hover,
+.ProseMirror-focused .latex-node.selected {
+  border-color: #000080;
+  background-color: rgba(0, 0, 128, 0.1);
+} 

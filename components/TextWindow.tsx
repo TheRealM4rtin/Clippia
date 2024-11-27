@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
 import { EditorContent, useEditor } from '@tiptap/react';
@@ -14,35 +14,63 @@ import TiptapImage from '@tiptap/extension-image';
 import Dropcursor from '@tiptap/extension-dropcursor';
 import { exportToMarkdown } from '@/lib/exportUtils';
 import { Progman43 } from '@react95/icons';
+import 'katex/dist/katex.min.css';
+import { LatexNode } from './LatexNode';
+import { WindowData, DragStartPos } from './types';
+import {
+  DEFAULT_WINDOW_WIDTH,
+  DEFAULT_WINDOW_HEIGHT,
+  WINDOW_PADDING,
+  RESIZE_CONTROL_SIZE,
+  ZOOM_ANIMATION_DURATION,
+  MAX_ZOOM_LEVEL,
+  AUTOSAVE_DELAY,
+  DRAG_THRESHOLD,
+  IMAGE_PADDING
+} from './constants';
+import {
+  sanitizeHtml,
+  validateImage,
+  debounce,
+  hasContentChanged,
+  saveToLocalStorage,
+  reportError,
+  RateLimit,
+  processImage,
+  isValidUrl
+} from './utils';
 
 const lowlight = createLowlight(all);
 
-interface WindowData {
-  id: string;
-  title: string;
-  content?: string;
-  isReadOnly?: boolean;
-  isNew?: boolean;
-  size?: {
-    width: number;
-    height: number;
-  };
-  zIndex?: number;
-  position?: {
-    x: number;
-    y: number;
-  };
-}
+// Rate limiter for autosave
+const saveRateLimit = new RateLimit(60 * 1000, 500);
 
-const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, selected }) => {
+const TextWindow: React.FC<NodeProps & { data: WindowData }> = memo(({ id, data, selected }) => {
   const { updateWindow, removeWindow } = useAppStore();
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const dragStartPosRef = useRef<DragStartPos | null>(null);
   const windowRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const previousContentRef = useRef<string>(data.content || '');
   const { setViewport } = useReactFlow();
   const draggedImageRef = useRef<string | null>(null);
+
+  // Debounced autosave
+  const debouncedSave = useCallback(
+    debounce<(content: string) => void>((content: string) => {
+      if (saveRateLimit.canProceed() && hasContentChanged(previousContentRef.current, content)) {
+        try {
+          updateWindow(id, { content: sanitizeHtml(content) });
+          saveToLocalStorage(`backup_${id}`, content);
+          previousContentRef.current = content;
+        } catch (error) {
+          reportError(error as Error, { windowId: id });
+        }
+      }
+    }, AUTOSAVE_DELAY),
+    [id, updateWindow]
+  );
 
   // Editor Configuration
   const editor = useEditor({
@@ -73,6 +101,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       Link.configure({
         openOnClick: false,
         linkOnPaste: true,
+        validate: url => isValidUrl(url),
       }),
       Placeholder.configure({
         placeholder: data.isReadOnly ? '' : 'Type here to start...',
@@ -89,8 +118,9 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       Dropcursor.configure({
         class: 'drop-cursor',
       }),
+      LatexNode,
     ],
-    content: data.content || '',
+    content: sanitizeHtml(data.content || ''),
     editable: !data.isReadOnly,
     onCreate: ({ editor }) => {
       if (data.isNew && !data.isReadOnly) {
@@ -101,28 +131,8 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
     onBlur: () => setIsEditing(false),
     onUpdate: ({ editor }) => {
       if (!data.isReadOnly) {
-        updateWindow(id, { content: editor.getHTML() });
+        debouncedSave(editor.getHTML());
       }
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm focus:outline-none',
-        spellcheck: 'false',
-      },
-      handleDOMEvents: {
-        mousedown: (view, event) => {
-          event.stopPropagation();
-          return false;
-        },
-        dragstart: (view, event) => {
-          const target = event.target as HTMLElement;
-          if (target.tagName === 'IMG') {
-            draggedImageRef.current = (target as HTMLImageElement).src;
-            return false;
-          }
-          return true;
-        },
-      },
     },
   });
 
@@ -131,72 +141,68 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
     const node = document.getElementById(id);
     if (node) {
       const bounds = node.getBoundingClientRect();
-      const padding = 50;
       const targetZoom = Math.min(
-        (window.innerWidth - padding * 2) / bounds.width,
-        (window.innerHeight - padding * 2) / bounds.height,
-        1.2
+        (window.innerWidth - WINDOW_PADDING * 2) / bounds.width,
+        (window.innerHeight - WINDOW_PADDING * 2) / bounds.height,
+        MAX_ZOOM_LEVEL
       );
 
       const x = -(bounds.left + bounds.width / 2 - window.innerWidth / 2) / targetZoom;
       const y = -(bounds.top + bounds.height / 2 - window.innerHeight / 2) / targetZoom;
 
-      setViewport({ x, y, zoom: targetZoom }, { duration: 800 });
+      setViewport({ x, y, zoom: targetZoom }, { duration: ZOOM_ANIMATION_DURATION });
     }
   }, [id, setViewport]);
 
   // Image handling functions
-  const processImage = useCallback((imgSrc: string, file?: File) => {
-    const img = new window.Image();
-    img.src = imgSrc;
-    
-    img.onload = () => {
-      if (editor) {
-        const windowWidth = data.size?.width ?? 300;
-        const maxWidth = windowWidth - 40;
-        const ratio = maxWidth / img.width;
-        const width = Math.floor(img.width * ratio);
-        const height = Math.floor(img.height * ratio);
+  const handleImageProcess = useCallback(async (imgSrc: string, file?: File) => {
+    try {
+      if (file) {
+        await validateImage(file);
+      }
 
+      const windowWidth = data.size?.width ?? DEFAULT_WINDOW_WIDTH;
+      const maxWidth = windowWidth - IMAGE_PADDING;
+      const dimensions = await processImage(imgSrc, maxWidth);
+
+      if (editor) {
         editor.chain()
           .focus()
           .setImage({
             src: imgSrc,
             alt: file?.name || 'Dragged image',
-          })
-          .updateAttributes('image', {
-            width: width,
-            height: height
+            ...dimensions
           })
           .insertContent('<p></p>')
           .focus()
           .run();
       }
-    };
-  }, [editor, data.size]);
+    } catch (error) {
+      reportError(error as Error, { windowId: id });
+    }
+  }, [editor, data.size?.width, id]);
 
   // Event handlers
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     
     if (e.dataTransfer.files.length > 0) {
-      const files = Array.from(e.dataTransfer.files);
-      files.forEach(file => {
-        if (file.type.startsWith('image/')) {
+      Array.from(e.dataTransfer.files)
+        .filter(file => file.type.startsWith('image/'))
+        .forEach(file => {
           const reader = new FileReader();
-          reader.onload = (event) => {
+          reader.onload = event => {
             if (event.target?.result) {
-              processImage(event.target.result.toString(), file);
+              handleImageProcess(event.target.result.toString(), file);
             }
           };
           reader.readAsDataURL(file);
-        }
-      });
+        });
     } else if (draggedImageRef.current) {
-      processImage(draggedImageRef.current);
+      handleImageProcess(draggedImageRef.current);
       draggedImageRef.current = null;
     }
-  }, [processImage]);
+  }, [handleImageProcess]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const isZooming = e.ctrlKey || e.metaKey;
@@ -226,7 +232,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       const deltaX = Math.abs(e.clientX - dragStartPosRef.current.x);
       const deltaY = Math.abs(e.clientY - dragStartPosRef.current.y);
       
-      if (deltaX > 5 || deltaY > 5) {
+      if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
         setIsDragging(true);
       }
     }
@@ -245,10 +251,18 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
 
   const handleExport = useCallback(async () => {
     if (editor) {
-      const content = editor.getHTML();
-      await exportToMarkdown(data.title, content);
+      try {
+        const content = editor.getHTML();
+        await exportToMarkdown(data.title, sanitizeHtml(content));
+      } catch (error) {
+        reportError(error as Error, { 
+          windowId: id,
+          action: 'export',
+          title: data.title
+        });
+      }
     }
-  }, [editor, data.title]);
+  }, [editor, data.title, id]);
 
   // Effects
   useEffect(() => {
@@ -276,13 +290,23 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isDragging]);
 
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (editor) {
+        const content = editor.getHTML();
+        saveToLocalStorage(`backup_${id}`, content);
+      }
+    };
+  }, [editor, id]);
+
   return (
     <div 
       ref={windowRef}
       className="window"
       style={{
-        width: data.size?.width ?? 300,
-        height: data.size?.height ?? 200,
+        width: data.size?.width ?? DEFAULT_WINDOW_WIDTH,
+        height: data.size?.height ?? DEFAULT_WINDOW_HEIGHT,
         backgroundColor: 'white',
         border: '2px solid #000080',
         position: 'relative',
@@ -303,28 +327,28 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
         <>
           <NodeResizeControl 
             position="top-left" 
-            style={{ width: '25px', height: '25px', cursor: 'nw-resize', border: 'none', background: 'transparent' }} 
+            style={{ width: RESIZE_CONTROL_SIZE, height: RESIZE_CONTROL_SIZE, cursor: 'nw-resize', border: 'none', background: 'transparent' }} 
             onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
           />
           <NodeResizeControl 
             position="top-right" 
-            style={{ width: '25px', height: '25px', cursor: 'ne-resize', border: 'none', background: 'transparent' }} 
+            style={{ width: RESIZE_CONTROL_SIZE, height: RESIZE_CONTROL_SIZE, cursor: 'ne-resize', border: 'none', background: 'transparent' }} 
             onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
           />
           <NodeResizeControl 
             position="bottom-left" 
-            style={{ width: '25px', height: '25px', cursor: 'sw-resize', border: 'none', background: 'transparent' }} 
+            style={{ width: RESIZE_CONTROL_SIZE, height: RESIZE_CONTROL_SIZE, cursor: 'sw-resize', border: 'none', background: 'transparent' }} 
             onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
           />
           <NodeResizeControl 
             position="bottom-right" 
-            style={{ width: '25px', height: '25px', cursor: 'se-resize', border: 'none', background: 'transparent' }} 
+            style={{ width: RESIZE_CONTROL_SIZE, height: RESIZE_CONTROL_SIZE, cursor: 'se-resize', border: 'none', background: 'transparent' }} 
             onResize={(_, { width, height }) => {
               updateWindow(id, { size: { width, height } });
             }}
@@ -404,6 +428,8 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = ({ id, data, sele
       </div>
     </div>
   );
-};
+});
+
+TextWindow.displayName = 'TextWindow';
 
 export default TextWindow;
