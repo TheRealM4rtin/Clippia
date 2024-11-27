@@ -81,34 +81,115 @@ export const LatexComponent = (props: LatexComponentProps) => {
         .focus()
         .command(({ tr, dispatch }) => {
           if (dispatch) {
-            tr.delete(pos, pos + 1);
+            tr.delete(pos, pos + node.nodeSize);
             return true;
           }
           return false;
         })
         .run();
     }
-  }, [editor, getPos]);
+  }, [editor, getPos, node.nodeSize]);
 
   const handleMouseEnter = () => setIsHovered(true);
   const handleMouseLeave = () => setIsHovered(false);
 
   if (isEditing) {
     return (
-      <NodeViewWrapper className={`latex-editor ${displayMode ? 'block' : 'inline'}`}>
-        <div className="latex-editor-container" onClick={e => e.stopPropagation()}>
+      <NodeViewWrapper 
+        className={`latex-editor ${displayMode ? 'block' : 'inline'}`}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        <div 
+          className="latex-editor-container" 
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: displayMode ? '100%' : '300px',
+            minWidth: '150px',
+            pointerEvents: 'auto',
+          }}
+        >
           <textarea
             ref={inputRef}
             value={localFormula}
             onChange={(e) => setLocalFormula(e.target.value)}
-            onBlur={stopEditing}
             onKeyDown={handleKeyDown}
             className="latex-input"
             rows={displayMode ? 3 : 1}
+            onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            onBlur={(e) => {
+              const container = e.currentTarget.closest('.latex-editor-container');
+              const relatedTarget = e.relatedTarget as Element | null;
+              if (!container?.contains(relatedTarget)) {
+                stopEditing();
+              }
+            }}
+            style={{
+              width: '100%',
+              resize: 'vertical',
+              minHeight: displayMode ? '80px' : '30px',
+              maxHeight: '200px',
+              padding: '8px',
+              marginBottom: '8px',
+              fontSize: '14px',
+              fontFamily: 'monospace',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              pointerEvents: 'auto',
+            }}
           />
-          <div className="latex-editor-buttons">
-            <button onClick={stopEditing} className="save-button">Save</button>
-            <button onClick={handleDelete} className="delete-button">Delete</button>
+          <div 
+            className="latex-editor-buttons"
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-end',
+              pointerEvents: 'auto',
+            }}
+            onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+          >
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                stopEditing();
+              }}
+              className="save-button"
+              type="button"
+              style={{
+                padding: '4px 12px',
+                borderRadius: '4px',
+                border: '1px solid #ccc',
+                background: '#fff',
+                cursor: 'pointer',
+                pointerEvents: 'auto',
+              }}
+            >
+              Save
+            </button>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDelete(e);
+              }}
+              className="delete-button"
+              type="button"
+              style={{
+                padding: '4px 12px',
+                borderRadius: '4px',
+                border: '1px solid #ff4444',
+                background: '#fff',
+                color: '#ff4444',
+                cursor: 'pointer',
+                pointerEvents: 'auto',
+              }}
+            >
+              Delete
+            </button>
           </div>
         </div>
       </NodeViewWrapper>
@@ -119,8 +200,8 @@ export const LatexComponent = (props: LatexComponentProps) => {
     const html = katex.renderToString(localFormula || formula, {
       throwOnError: true,
       displayMode,
-      trust: false, // Security: Disable custom macro execution
-      strict: true  // Security: Enforce strict mode
+      trust: false,
+      strict: true
     });
 
     return (
@@ -129,13 +210,25 @@ export const LatexComponent = (props: LatexComponentProps) => {
         onClick={startEditing}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        style={{
+          display: displayMode ? 'block' : 'inline-block',
+          margin: displayMode ? '1em 0' : '0',
+        }}
       >
-        <div className="latex-content">
+        <div 
+          className="latex-content"
+          style={{
+            display: displayMode ? 'block' : 'inline-block',
+          }}
+        >
           <span
             data-latex=""
             data-formula={formula}
             data-display-mode={displayMode}
             dangerouslySetInnerHTML={{ __html: html }}
+            style={{
+              display: displayMode ? 'block' : 'inline-block',
+            }}
           />
         </div>
       </NodeViewWrapper>
@@ -162,7 +255,7 @@ export const LatexNode = Node.create({
   inline: true,
   atom: true,
   selectable: true,
-  draggable: true,
+  draggable: false,
 
   addAttributes() {
     return {
@@ -171,6 +264,7 @@ export const LatexNode = Node.create({
       },
       displayMode: {
         default: false,
+        parseHTML: element => element.getAttribute('data-display-mode') === 'true',
       },
     };
   },
@@ -191,14 +285,14 @@ export const LatexNode = Node.create({
   },
 
   renderHTML({ node }) {
-    return [
-      'span',
-      mergeAttributes(this.options.HTMLAttributes, {
-        'data-latex': '',
-        'data-formula': node.attrs.formula,
-        'data-display-mode': node.attrs.displayMode,
-      }),
-    ];
+    const attrs = {
+      'data-latex': '',
+      'data-formula': node.attrs.formula,
+      'data-display-mode': node.attrs.displayMode,
+      class: node.attrs.displayMode ? 'latex-block' : 'latex-inline',
+      style: node.attrs.displayMode ? 'display: block;' : 'display: inline;',
+    };
+    return ['span', mergeAttributes(this.options.HTMLAttributes, attrs)];
   },
 
   addNodeView() {

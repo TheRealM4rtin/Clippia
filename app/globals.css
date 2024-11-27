@@ -113,3 +113,15 @@ canvas {
   }
 }
 
+.latex-inline {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.2em;
+}
+
+.latex-block {
+  display: block;
+  margin: 1em 0;
+  text-align: center;
+}
+
