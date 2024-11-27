@@ -17,13 +17,15 @@ import Panel from './panel/Panel'
 import styles from './whiteboard.module.css'  // Make sure to import the styles
 import FeedbackWindow from './panel/windows/FeedbackWindow';
 import LoginWindow from './panel/windows/LoginWindow';
+import ImageNode from './ImageNode'
 
 // Define node types with correct keys matching the window types
 const nodeTypes = {
   text: TextWindow,
   myComputer: MyComputerWindow,
   feedback: FeedbackWindow,
-  login: LoginWindow
+  login: LoginWindow,
+  image: ImageNode
 } as const;
 
 // Create a separate component for the Flow content
