@@ -78,7 +78,11 @@ const FlowContent = () => {
       minZoom={0.1}
       maxZoom={1.5}
       defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-      panOnDrag={true}
+      panOnDrag={(event) => {
+        // Only allow panning when not interacting with the 3D model
+        const target = event.target as HTMLElement;
+        return !target.closest('.threeDCanvas');
+      }}
       panOnScroll={true}
       zoomOnScroll={true}
       zoomOnPinch={true}
