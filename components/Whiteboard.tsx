@@ -9,15 +9,18 @@ import {
   SelectionMode
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css';
+import { Canvas } from '@react-three/fiber';
 
 import { useAppStore } from '@/lib/store'
 import TextWindow from './TextWindow'
 import MyComputerWindow from './panel/windows/MyComputerWindow'
 import Panel from './panel/Panel'
-import styles from './whiteboard.module.css'  // Make sure to import the styles
+import styles from './whiteboard.module.css'
 import FeedbackWindow from './panel/windows/FeedbackWindow';
 import LoginWindow from './panel/windows/LoginWindow';
 import ImageNode from './ImageNode'
+import Assistant3D from './Assistant3D'
+import CameraController from './CameraController'
 
 // Define node types with correct keys matching the window types
 const nodeTypes = {
@@ -124,6 +127,14 @@ const Whiteboard: React.FC = () => {
         <ReactFlowProvider>
           <FlowContent />
         </ReactFlowProvider>
+      </div>
+      <div className={styles.threeDCanvas}>
+        <Canvas>
+          <CameraController />
+          <Assistant3D />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} />
+        </Canvas>
       </div>
     </main>
   );
