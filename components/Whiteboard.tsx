@@ -19,7 +19,7 @@ import styles from './whiteboard.module.css'
 import FeedbackWindow from './panel/windows/FeedbackWindow';
 import LoginWindow from './panel/windows/LoginWindow';
 import ImageNode from './ImageNode'
-import Assistant3D from './Assistant3D'
+import Assistant3DNode from './nodes/Assistant3DNode'
 import CameraController from './CameraController'
 
 // Define node types with correct keys matching the window types
@@ -28,7 +28,8 @@ const nodeTypes = {
   myComputer: MyComputerWindow,
   feedback: FeedbackWindow,
   login: LoginWindow,
-  image: ImageNode
+  image: ImageNode,
+  assistant3D: Assistant3DNode
 } as const;
 
 // Create a separate component for the Flow content
@@ -78,11 +79,7 @@ const FlowContent = () => {
       minZoom={0.1}
       maxZoom={1.5}
       defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-      panOnDrag={(event) => {
-        // Only allow panning when not interacting with the 3D model
-        const target = event.target as HTMLElement;
-        return !target.closest('.threeDCanvas');
-      }}
+      panOnDrag={true}
       panOnScroll={true}
       zoomOnScroll={true}
       zoomOnPinch={true}
@@ -96,18 +93,7 @@ const FlowContent = () => {
       proOptions={{ 
         hideAttribution: true,
       }}
-      fitViewOptions={{
-        padding: 0.2,
-        includeHiddenNodes: true,
-        duration: 200
-      }}
     >
-      
-      <MiniMap 
-        zoomable 
-        pannable
-        position="bottom-left"
-      />
       <Background 
         color={colorBackground ? '#ffffff10' : '#00000010'}
       />
@@ -116,6 +102,11 @@ const FlowContent = () => {
           <Panel />
         </div>
       </FlowPanel>
+      <MiniMap 
+        zoomable 
+        pannable
+        position="bottom-left"
+      />
     </Flow>
   );
 };
@@ -131,14 +122,6 @@ const Whiteboard: React.FC = () => {
         <ReactFlowProvider>
           <FlowContent />
         </ReactFlowProvider>
-      </div>
-      <div className={styles.threeDCanvas}>
-        <Canvas>
-          <CameraController />
-          <Assistant3D />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
-        </Canvas>
       </div>
     </main>
   );

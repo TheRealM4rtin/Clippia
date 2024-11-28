@@ -48,9 +48,20 @@ interface AppState {
   setBackgroundColor: (color: string) => void;
 }
 
+// Add initial nodes with the 3D assistant
+const initialNodes: Node[] = [
+  {
+    id: 'assistant3d',
+    type: 'assistant3D',
+    position: { x: window.innerWidth * 0.8, y: window.innerHeight * 0.8 },
+    data: {},
+    draggable: true,
+  }
+];
+
 export const useAppStore = create<AppState>((set, get) => ({
   // React Flow State
-  nodes: [],
+  nodes: initialNodes,
   edges: [],
   onNodesChange: (changes: NodeChange[]) => {
     set({
