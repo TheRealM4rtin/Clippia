@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Vector3, Euler } from 'three';
 import { useAppStore } from '@/lib/store';
 import { useGesture } from '@use-gesture/react';
+import * as THREE from 'three';
 
 const Assistant3D: React.FC = () => {
   const modelRef = useRef<THREE.Group>();
@@ -40,20 +41,23 @@ const Assistant3D: React.FC = () => {
 
   // Gesture handling for drag and throw
   const bind = useGesture({
-    onDragStart: () => {
+    onDragStart: ({ event }) => {
+      event.stopPropagation(); // Prevent event from reaching other handlers
       setIsDragging(true);
       if (modelRef.current) {
         setDragStartPosition(modelRef.current.position.clone());
       }
     },
-    onDrag: ({ delta: [dx, dy] }) => {
+    onDrag: ({ event, delta: [dx, dy] }) => {
+      event.stopPropagation(); // Prevent event from reaching other handlers
       if (modelRef.current && dragStartPosition) {
         const currentDragSpeed = dragSpeed / viewport.zoom;
         modelRef.current.position.x += dx * currentDragSpeed;
         modelRef.current.position.y -= dy * currentDragSpeed;
       }
     },
-    onDragEnd: ({ velocity: [vx, vy] }) => {
+    onDragEnd: ({ event, velocity: [vx, vy] }) => {
+      event.stopPropagation(); // Prevent event from reaching other handlers
       setIsDragging(false);
       setDragStartPosition(null);
       if (modelRef.current) {
