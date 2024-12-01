@@ -23,15 +23,15 @@ function HomeContent() {
     }
   }, [searchParams, router]);
 
+  // Only render one component at a time
+  if (!isClient) return null;
+
   return (
     <main className="w-full h-full">
-      {isClient && (
-        <>
-          <Whiteboard />
-          {showOnboarding && (
-            <Onboarding onComplete={() => setShowOnboarding(false)} />
-          )}
-        </>
+      {showOnboarding ? (
+        <Onboarding onComplete={() => setShowOnboarding(false)} />
+      ) : (
+        <Whiteboard />
       )}
     </main>
   );
