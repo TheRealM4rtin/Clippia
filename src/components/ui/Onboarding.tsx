@@ -120,6 +120,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           "- Give me your feedback, you are in the first batch of users!",
           "",
           "Try dragging this window around",
+          "Use '/' to display Clippia commands in the chat",
           "",
           "Coming soon: ",
           "- Resize windows",
