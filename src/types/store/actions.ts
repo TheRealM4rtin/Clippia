@@ -2,6 +2,7 @@ import { User } from '@supabase/supabase-js';
 import { Connection, NodeChange, EdgeChange } from '@xyflow/react';
 import { WindowData } from '@/types/window';
 import { AssistantState, Position, ViewportState } from '@/types/store/state';
+import { ChatMessage } from '@/lib/store/slices/assistantSlice';
 
 export interface FlowActions {
   onNodesChange: (changes: NodeChange[]) => void;
@@ -22,6 +23,7 @@ export interface UIActions {
   setBackgroundColor: (color: string) => void;
   toggleColorBackground: () => void;
   setViewportSize: (size: { width: number; height: number }) => void;
+  setResizing: (isResizing: boolean) => void;
 }
 
 export interface UserActions {
@@ -30,6 +32,8 @@ export interface UserActions {
 
 export interface AssistantActions {
   updateAssistantState: (updates: Partial<AssistantState>) => void;
+  addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
+  handleAuthResponse: (response: string) => void;
 }
 
 export type StoreActions = FlowActions & WindowActions & UIActions & UserActions & AssistantActions; 

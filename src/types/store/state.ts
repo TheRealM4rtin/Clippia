@@ -1,6 +1,7 @@
 import { Node, Edge } from '@xyflow/react';
 import { User } from '@supabase/supabase-js';
 import { WindowData } from '@/types/window';
+import { ChatCommand, ChatMessage, AuthState } from '@/lib/store/slices/assistantSlice';
 
 export interface Position {
   x: number;
@@ -18,6 +19,10 @@ export interface AssistantState {
   targetPosition: Position | null;
   isMoving: boolean;
   lastMoveTime: number;
+  isChatOpen: boolean;
+  messages: ChatMessage[];
+  availableCommands: ChatCommand[];
+  authState: AuthState | null;
 }
 
 export interface FlowState {

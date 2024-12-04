@@ -33,4 +33,12 @@ export const createUISlice: StateCreator<
       },
     }));
   },
+  setResizing: (isResizing: boolean) => {
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        isResizing
+      }
+    }));
+  }
 }); 

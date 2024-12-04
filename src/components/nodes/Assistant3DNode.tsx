@@ -7,11 +7,17 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import * as THREE from 'three';
 import { useAppStore } from '@/lib/store';
 import styles from '@/styles/animations.module.css';
+import AssistantChatPortal from '@/components/chat/AssistantChatPortal';
 
 const Assistant3DNode: React.FC<NodeProps> = memo(({ id }) => {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const mountedRef = useRef(false);
-  const { windows: { windows }, addWindow, removeWindow, flow: { viewport }, onNodesChange } = useAppStore();
+  const { 
+    flow: { viewport }, 
+    onNodesChange,
+    updateAssistantState,
+    assistant
+  } = useAppStore();
 
   // Function to update node position to follow viewport
   const updateNodePosition = useCallback(() => {
@@ -37,24 +43,11 @@ const Assistant3DNode: React.FC<NodeProps> = memo(({ id }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    const existingMyComputer = windows.find(w => w.type === 'myComputer');
-    if (existingMyComputer?.id) {
-      removeWindow(existingMyComputer.id);
-    } else {
-      const rect = e.currentTarget.getBoundingClientRect();
-      addWindow({
-        id: `myComputer-${Date.now()}`,
-        title: 'My Computer',
-        content: '',
-        type: 'myComputer',
-        position: {
-          x: rect.left + rect.width + 10,
-          y: rect.top
-        },
-        size: { width: 300, height: 400 },
-        zIndex: Math.min(Math.max(...windows.map(w => w.zIndex || 0)) + 1, 999999),
-      });
-    }
+    // Toggle the chat interface
+    updateAssistantState({ 
+      isChatOpen: !assistant.isChatOpen,
+      position: { x: e.clientX, y: e.clientY }
+    });
   };
 
   useEffect(() => {
@@ -69,69 +62,72 @@ const Assistant3DNode: React.FC<NodeProps> = memo(({ id }) => {
   }, []);
 
   return (
-    <div 
-      className={`${styles.windowHoverEffect} ${styles.strong}`}
-      style={{ 
-        width: 150, 
-        height: 150,
-        background: 'transparent',
-        borderRadius: '8px',
-        pointerEvents: 'all',
-        cursor: 'pointer',
-        position: 'relative',
-        zIndex: 999
-      }}
-      onClick={handleClick}
-    >
-      {mountedRef.current && (
-        <ErrorBoundary FallbackComponent={LoadingScreen}>
-          <Suspense fallback={<LoadingScreen />}>
-            <Canvas
-              orthographic
-              camera={{
-                position: [0, 0, 10],
-                zoom: 50,
-                near: 1,
-                far: 200
-              }}
-              style={{ 
-                width: '100%', 
-                height: '100%',
-                pointerEvents: 'auto',
-                position: 'relative',
-                zIndex: 1
-              }}
-              dpr={1}
-              gl={{ 
-                alpha: true, 
-                antialias: false,
-                powerPreference: 'default',
-                preserveDrawingBuffer: false,
-              }}
-              onCreated={({ gl }) => {
-                rendererRef.current = gl;
-                gl.setPixelRatio(1);
-                gl.setClearColor('#000000', 0);
-              }}
-            >
-              <Assistant3D />
-              <ambientLight intensity={0.8} />
-              <pointLight position={[10, 10, 10]} intensity={0.5} />
-            </Canvas>
-          </Suspense>
-        </ErrorBoundary>
-      )}
-      <Handle 
-        type="target" 
-        position={Position.Top} 
-        style={{ visibility: 'hidden' }} 
-      />
-      <Handle 
-        type="source" 
-        position={Position.Bottom} 
-        style={{ visibility: 'hidden' }} 
-      />
-    </div>
+    <>
+      <div 
+        className={`${styles.windowHoverEffect} ${styles.strong}`}
+        style={{ 
+          width: 150, 
+          height: 150,
+          background: 'transparent',
+          borderRadius: '8px',
+          pointerEvents: 'all',
+          cursor: 'pointer',
+          position: 'relative',
+          zIndex: 999
+        }}
+        onClick={handleClick}
+      >
+        {mountedRef.current && (
+          <ErrorBoundary FallbackComponent={LoadingScreen}>
+            <Suspense fallback={<LoadingScreen />}>
+              <Canvas
+                orthographic
+                camera={{
+                  position: [0, 0, 10],
+                  zoom: 50,
+                  near: 1,
+                  far: 200
+                }}
+                style={{ 
+                  width: '100%', 
+                  height: '100%',
+                  pointerEvents: 'none',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+                dpr={1}
+                gl={{ 
+                  alpha: true, 
+                  antialias: false,
+                  powerPreference: 'default',
+                  preserveDrawingBuffer: false,
+                }}
+                onCreated={({ gl }) => {
+                  rendererRef.current = gl;
+                  gl.setPixelRatio(1);
+                  gl.setClearColor('#000000', 0);
+                }}
+              >
+                <Assistant3D />
+                <ambientLight intensity={0.8} />
+                <pointLight position={[10, 10, 10]} intensity={0.5} />
+              </Canvas>
+            </Suspense>
+          </ErrorBoundary>
+        )}
+        <Handle 
+          type="target" 
+          position={Position.Top} 
+          style={{ visibility: 'hidden' }} 
+        />
+        <Handle 
+          type="source" 
+          position={Position.Bottom} 
+          style={{ visibility: 'hidden' }} 
+        />
+      </div>
+      <AssistantChatPortal />
+    </>
   );
 });
 

@@ -243,7 +243,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = memo(({ id, data,
       };
       
       setResizeDirection(resizeType);
-      setResizing(true, id);
+      setResizing(true);
       return;
     }
     
@@ -282,7 +282,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = memo(({ id, data,
     };
     
     setResizeDirection(direction);
-    setResizing(true, id);
+    setResizing(true);
   }, [id, setResizing]);
 
   const handleResizeMouseMove = useCallback((e: MouseEvent) => {
@@ -313,10 +313,10 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = memo(({ id, data,
     updateWindow(id, {
       size: { width: newWidth, height: newHeight }
     });
-  }, [ui.isResizing, resizeDirection, id, updateWindow]);
+  }, [ui.isResizing, resizeDirection, updateWindow, id]);
 
   const handleResizeMouseUp = useCallback(() => {
-    setResizing(false, null);
+    setResizing(false);
     setResizeDirection(null);
     resizeStartRef.current = null;
   }, [setResizing]);
@@ -333,7 +333,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = memo(({ id, data,
         position: { x: newX, y: newY }
       });
     }
-  }, [isDragging, id, updateWindow]);
+  }, [isDragging, updateWindow]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -361,7 +361,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = memo(({ id, data,
         });
       }
     }
-  }, [editor, data.title, id]);
+  }, [editor, data.title]);
 
   // Add this function to calculate viewport-adjusted position
   const calculateViewportPosition = useCallback(() => {

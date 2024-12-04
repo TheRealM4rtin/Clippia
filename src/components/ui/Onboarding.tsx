@@ -118,7 +118,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           "- Insert images inside windows",
           "- Connect your ideas",
           "",
-          "Try dragging this window around, or play with chill bro!"
+          "Try dragging this window around, or play with chill bro"
         ].join('\n'),
       },
     };

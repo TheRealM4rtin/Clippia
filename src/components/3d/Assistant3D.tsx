@@ -13,11 +13,11 @@ const Assistant3D: React.FC = () => {
 
   useEffect(() => {
     mountedRef.current = true;
+    const model = modelRef.current;
     return () => {
       mountedRef.current = false;
-      // Clean up any animations or ongoing processes
-      if (modelRef.current) {
-        modelRef.current.clear();
+      if (model) {
+        model.clear();
       }
     };
   }, []);

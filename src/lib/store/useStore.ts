@@ -25,7 +25,9 @@ export const useAppStore = create<AppState & StoreActions>()(
         },
         ui: {
           backgroundColor: '#ffffff',
-          colorBackground: false
+          colorBackground: false,
+          isResizing: false,
+          resizingNodeId: null
         },
         user: {
           user: null
@@ -34,7 +36,28 @@ export const useAppStore = create<AppState & StoreActions>()(
           position: { x: 0, y: 0 },
           targetPosition: null,
           isMoving: false,
-          lastMoveTime: 0
+          lastMoveTime: Date.now(),
+          isChatOpen: false,
+          messages: [],
+          availableCommands: [
+            {
+              title: 'Login',
+              command: '/login',
+              description: 'Open the login interface',
+              action: () => {
+                // Implementation will be added
+              },
+            },
+            {
+              title: 'About',
+              command: '/about',
+              description: 'Show information about Clippia',
+              action: () => {
+                // Implementation will be added
+              },
+            },
+          ],
+          authState: null
         },
         ...createFlowSlice(set, get, api),
         ...createWindowSlice(set, get, api),
