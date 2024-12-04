@@ -1,0 +1,35 @@
+.colorPickerContainer {
+  display: flex;
+  box-sizing: border-box;
+  width: 256px;
+  height: 33px;
+  background: var(--button-face);
+  padding: 2px;
+  border: 1px solid var(--button-dark);
+}
+
+.colorBox {
+  display: grid;
+  grid-template-columns: repeat(3, 16px);
+  grid-template-rows: 16px;
+  gap: 1px;
+  padding: 1px;
+  background: var(--button-face);
+}
+
+.colorSquare {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--button-darker);
+  cursor: pointer;
+}
+
+.colorSquare:hover {
+  border: 1px solid #FFFFFF;
+  outline: 1px solid var(--button-darker);
+}
+
+.selected {
+  border: 1px solid #FFFFFF;
+  outline: 1px solid var(--button-darker);
+} 

@@ -1,21 +1,24 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: process.env.NODE_ENV === 'production'
-              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.stripe.com https://api.stripe.com https://r.stripe.com; frame-src https://*.stripe.com; img-src 'self' https://*.stripe.com data:;"
-              : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.stripe.com https://api.stripe.com https://r.stripe.com; frame-src https://*.stripe.com; img-src 'self' https://*.stripe.com data:;"
-          },
-          // Note: r.stripe.com is included for Stripe's fraud prevention and analytics.
-          // Some users' ad blockers may still block this, but it shouldn't affect core payment functionality.
-        ],
-      },
-    ]
+  reactStrictMode: true,
+  swcMinify: true,
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@/lib': path.resolve(__dirname, './src/lib'),
+      '@/types': path.resolve(__dirname, './src/types'),
+      '@/components': path.resolve(__dirname, './src/components'),
+      '@/styles': path.resolve(__dirname, './src/styles'),
+      '@/contexts': path.resolve(__dirname, './src/contexts'),
+      '@/app': path.resolve(__dirname, './src/app'),
+    };
+    return config;
   },
 }
 

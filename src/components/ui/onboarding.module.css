@@ -1,0 +1,26 @@
+.remove-meme-button {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  background: rgba(255, 0, 0, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10000;
+  padding: 4px 8px;
+  transition: all 0.2s;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.remove-meme-button:hover {
+  transform: scale(1.1);
+  background: rgba(255, 0, 0, 1);
+  border-color: rgba(255, 255, 255, 1);
+}
