@@ -25,15 +25,28 @@
   gap: 8px;
   padding: 4px;
   cursor: pointer;
+  padding: 8px;
+  border: 2px solid transparent;
 }
 
 .computerIcon:hover {
   background: rgba(0, 0, 0, 0.1);
+  border: 2px dotted #000;
 }
 
 .icon {
   width: 32px;
   height: 32px;
+}
+
+.error {
+  background: #ffdede;
+  border: 1px solid #ff9b9b;
+  color: #d00;
+  padding: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  box-shadow: inset 1px 1px #fff;
 }
 
 .fieldRow {

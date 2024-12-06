@@ -1,5 +1,5 @@
 import type { User, UserIdentity } from '@supabase/supabase-js'
-import type { Database } from './database'
+import type { Database } from '@/types/database.types'
 
 // Get profile type from database
 type DbProfileRow = Database['public']['Tables']['profiles']['Row']

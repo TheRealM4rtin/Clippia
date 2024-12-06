@@ -104,8 +104,12 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
       email: user.email || null,
       email_verified: user.user_metadata?.email_verified || false,
       role: user.user_metadata?.role || 'user',
-      created_at: user.created_at || null,
-      updated_at: user.updated_at || null,
+      customer_id: null,
+      subscription_id: null,
+      subscription_status: null,
+      subscription_tier: null,
+      subscription_updated_at: null,
+      updated_at: user.updated_at || null
     };
 
     return authUser;

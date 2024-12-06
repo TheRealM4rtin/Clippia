@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      checkout_attempts: {
+        Row: {
+          checkout_id: string | null
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          checkout_id?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          checkout_id?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           contribution_details: string | null
@@ -39,51 +69,129 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          customer_id: string | null
           email: string | null
           id: string
+          subscription_id: string | null
+          subscription_status: string | null
+          subscription_tier:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          subscription_updated_at: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          customer_id?: string | null
           email?: string | null
           id: string
+          subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          subscription_updated_at?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          customer_id?: string | null
           email?: string | null
           id?: string
+          subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          subscription_updated_at?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscription_features: {
+        Row: {
+          created_at: string
+          feature_key: string
+          id: string
+          tier: string
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          id?: string
+          tier: string
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          id?: string
+          tier?: string
         }
         Relationships: []
       }
       subscriptions: {
         Row: {
           created_at: string | null
+          current_period_end: string | null
           id: string
+          plan: string
           status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
+          subscription_id: string
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          current_period_end?: string | null
           id?: string
+          plan: string
           status: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
+          subscription_id: string
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          current_period_end?: string | null
           id?: string
+          plan?: string
           status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
+          subscription_id?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean | null
+          processed_at: string | null
+          retry_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          retry_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          retry_count?: number | null
         }
         Relationships: []
       }
@@ -145,13 +253,19 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_subscription_tier: {
+        Args: {
+          user_id: string
+        }
+        Returns: string
+      }
       get_upper_system_role: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       has_active_subscription: {
         Args: {
-          target_account_id: string
+          user_id: string
         }
         Returns: boolean
       }
@@ -211,6 +325,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      process_subscription_webhook: {
+        Args: {
+          payload: Json
+        }
+        Returns: Json
+      }
       team_account_workspace: {
         Args: {
           account_slug: string
@@ -227,12 +347,41 @@ export type Database = {
           permissions: Database["public"]["Enums"]["app_permissions"][]
         }[]
       }
+      test_auth_flow: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       transfer_team_account_ownership: {
         Args: {
           target_account_id: string
           new_owner_id: string
         }
         Returns: undefined
+      }
+      update_checkout_status: {
+        Args: {
+          p_checkout_url: string
+          p_status: string
+          p_completed_at?: string
+        }
+        Returns: undefined
+      }
+      update_user_subscription: {
+        Args: {
+          user_id: string
+          new_tier: Database["public"]["Enums"]["subscription_tier"]
+          new_status: string
+          new_subscription_id: string
+          new_customer_id: string
+        }
+        Returns: undefined
+      }
+      verify_profile_setup: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          message: string
+          status: boolean
+        }[]
       }
     }
     Enums: {
@@ -246,6 +395,7 @@ export type Database = {
       notification_channel: "in_app" | "email"
       notification_type: "info" | "warning" | "error"
       payment_status: "pending" | "succeeded" | "failed"
+      storage_location: "postgres" | "s3"
       subscription_item_type: "flat" | "per_seat" | "metered"
       subscription_status:
         | "active"
@@ -256,6 +406,7 @@ export type Database = {
         | "incomplete"
         | "incomplete_expired"
         | "paused"
+      subscription_tier: "basic" | "early_adopter" | "support"
     }
     CompositeTypes: {
       invitation: {
@@ -362,13 +513,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-// Add these utility types at the end of the file
-export type TableRow<T extends keyof Database['public']['Tables']> = 
-  Database['public']['Tables'][T]['Row']
-
-export type TableInsert<T extends keyof Database['public']['Tables']> = 
-  Database['public']['Tables'][T]['Insert']
-
-export type TableUpdate<T extends keyof Database['public']['Tables']> = 
-  Database['public']['Tables'][T]['Update']

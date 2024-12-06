@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState, useEffect } from 'react';
 import ButtonPanel from '@/components/ui/ButtonPanel';
 import { Mail } from '@react95/icons';
 import styles from './Panel.module.css';
@@ -6,11 +6,18 @@ import { useAppStore } from '@/lib/store';
 import { useReactFlow } from '@xyflow/react';
 import ColorPicker from '@/components/ui/ColorPicker';
 import { WindowData } from '@/types/window';
+import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/utils/supabase/client';
 
+const supabase = createClient();
 const WINDOW_SPACING = 30;
 
 const Panel: React.FC = memo(() => {
   const panelWidth = 250;
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user, loading, session, refreshAuth } = useAuth();
+  
   const { 
     flow: { nodes },
     windows: { windows }, 
@@ -22,6 +29,84 @@ const Panel: React.FC = memo(() => {
   } = useAppStore();
 
   const { fitView, getViewport } = useReactFlow();
+
+  // Debug effect to log auth state changes
+  useEffect(() => {
+    console.log('Auth state:', { user, loading });
+  }, [user, loading]);
+
+  // Add useEffect to debug auth state changes
+  useEffect(() => {
+    const checkAuth = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Current session:', session);
+        if (session && !user) {
+            // Force refresh auth context if we have a session but no user
+            await supabase.auth.refreshSession();
+        }
+    };
+    checkAuth();
+  }, [user]);
+
+  const handlePurchase = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+        if (!session) {
+            setError('Please sign in to upgrade your account');
+            await refreshAuth();
+            return;
+        }
+
+        if (loading) {
+            setError('Please wait while we load your account details');
+            return;
+        }
+
+        const userId = session.user.id;
+        console.log('Starting checkout process for user:', userId);
+
+        const response = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ userId })
+        });
+
+        console.log('Checkout response status:', response.status);
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server returned non-JSON response');
+        }
+
+        const data = await response.json();
+        console.log('Checkout response data:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to create checkout');
+        }
+
+        const checkoutUrl = data.data?.attributes?.url;
+        if (checkoutUrl) {
+            console.log('Redirecting to checkout:', checkoutUrl);
+            window.location.href = checkoutUrl;
+        } else {
+            console.error('Checkout response:', data);
+            throw new Error('No checkout URL returned');
+        }
+    } catch (err) {
+        console.error('Checkout error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to create checkout session');
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   const handleAddWindow = useCallback(() => {
     const existingWindows = nodes.filter(n => n.type === 'text');
@@ -149,7 +234,19 @@ const Panel: React.FC = memo(() => {
           <ButtonPanel.Button onClick={handleFitView}>
             Fit View
           </ButtonPanel.Button>
+          <ButtonPanel.Button 
+            onClick={handlePurchase}
+            disabled={isLoading}
+            className={isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+          >
+            {isLoading ? 'Processing...' : '✨ Upgrade Now ✨'}
+          </ButtonPanel.Button>
         </ButtonPanel>
+        {error && (
+          <div className={styles.error}>
+            {error}
+          </div>
+        )}
       </div>
 
       <div className={styles.divider} />

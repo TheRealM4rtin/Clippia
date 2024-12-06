@@ -1,27 +1,23 @@
 import React from 'react'
 
-interface ButtonProps {
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
-  children: React.ReactNode
-}
+type ButtonProps = {
+  onClick: () => void | Promise<void>;
+  disabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+};
 
-const Button: React.FC<ButtonProps> = ({ onClick, children }) => (
-  <button 
-    onClick={onClick}
-    className="window-button"
-    style={{
-      fontFamily: '"Pixelated MS Sans Serif", Arial',
-      fontSize: '11px',
-      color: 'black',
-      backgroundColor: '#D4D0C8',
-      border: '1px solid #808080',
-      padding: '2px 8px',
-      marginRight: '4px'
-    }}
-  >
-    {children}
-  </button>
-)
+const Button: React.FC<ButtonProps> = ({ onClick, disabled, className, children }) => {
+  return (
+    <button 
+      onClick={onClick}
+      disabled={disabled}
+      className={className}
+    >
+      {children}
+    </button>
+  );
+};
 
 interface ButtonPanelProps {
   children: React.ReactNode

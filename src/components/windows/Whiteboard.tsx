@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, ComponentType, memo, useMemo } from 'react'
+import React, { useEffect, useCallback, ComponentType, memo, useMemo, useRef } from 'react'
 import { 
   ReactFlow as Flow,
   MiniMap,
@@ -9,7 +9,11 @@ import {
   SelectionMode,
   Position,
   NodeProps,
-  OnMoveEnd
+  OnMoveEnd,
+  NodeChange,
+  EdgeChange,
+  Connection,
+  Viewport
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css';
 import debounce from 'lodash/debounce'
@@ -48,6 +52,15 @@ const FlowContent = memo(() => {
     setViewport
   } = useAppStore();
 
+  // Track viewport updates
+  const lastViewportUpdate = useRef(Date.now());
+  const viewportUpdateThreshold = 32; // ~30fps for viewport updates
+
+  // Batch node updates
+  const nodeUpdateQueue = useRef<NodeChange[]>([]);
+  const edgeUpdateQueue = useRef<EdgeChange[]>([]);
+  const isProcessingUpdates = useRef(false);
+
   // Add Assistant3D node on mount - with proper cleanup
   useEffect(() => {
     const assistant3DExists = nodes.some(node => node.type === 'assistant3D');
@@ -66,31 +79,127 @@ const FlowContent = memo(() => {
         }
       };
       
-      onNodesChange([{
+      nodeUpdateQueue.current.push({
         type: 'add',
         item: newNode
-      }]);
+      });
+      processNodeUpdates();
     }
-  }, [nodes, onNodesChange]);
+  }, [nodes]);
 
-  // Memoize viewport update callback
-  const handleMoveEnd = useCallback((event: React.MouseEvent | TouchEvent | null, newViewport: { x: number; y: number; zoom: number }) => {
-    setViewport(newViewport);
+  // Process batched node updates
+  const processNodeUpdates = useCallback(() => {
+    if (isProcessingUpdates.current || nodeUpdateQueue.current.length === 0) return;
+    
+    isProcessingUpdates.current = true;
+    const updates = [...nodeUpdateQueue.current];
+    nodeUpdateQueue.current = [];
+
+    requestAnimationFrame(() => {
+      onNodesChange(updates);
+      isProcessingUpdates.current = false;
+      
+      if (nodeUpdateQueue.current.length > 0) {
+        processNodeUpdates();
+      }
+    });
+  }, [onNodesChange]);
+
+  // Process batched edge updates
+  const processEdgeUpdates = useCallback(() => {
+    if (edgeUpdateQueue.current.length === 0) return;
+    
+    const updates = [...edgeUpdateQueue.current];
+    edgeUpdateQueue.current = [];
+
+    requestAnimationFrame(() => {
+      onEdgesChange(updates);
+    });
+  }, [onEdgesChange]);
+
+  // Optimized handlers with batching
+  const memoizedOnNodesChange = useCallback((changes: NodeChange[]) => {
+    nodeUpdateQueue.current.push(...changes);
+    processNodeUpdates();
+  }, [processNodeUpdates]);
+
+  const memoizedOnEdgesChange = useCallback((changes: EdgeChange[]) => {
+    edgeUpdateQueue.current.push(...changes);
+    processEdgeUpdates();
+  }, [processEdgeUpdates]);
+
+  const memoizedOnConnect = useCallback((connection: Connection) => {
+    requestAnimationFrame(() => {
+      onConnect(connection);
+    });
+  }, [onConnect]);
+
+  // Optimized viewport update with throttling
+  const handleMoveEnd = useCallback((event: React.MouseEvent | TouchEvent | null, newViewport: Viewport) => {
+    const now = Date.now();
+    if (now - lastViewportUpdate.current >= viewportUpdateThreshold) {
+      lastViewportUpdate.current = now;
+      requestAnimationFrame(() => {
+        setViewport(newViewport);
+      });
+    }
   }, [setViewport]);
 
-  // Memoize viewport size update
+  // Optimized edge scrolling
+  const handleEdgeScroll = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    const { clientX, clientY } = event;
+    const { innerWidth, innerHeight } = window;
+    const edgeThreshold = 50;
+    const scrollSpeed = 15;
+
+    if (clientX < edgeThreshold || clientX > innerWidth - edgeThreshold ||
+        clientY < edgeThreshold || clientY > innerHeight - edgeThreshold) {
+      
+      const dx = clientX < edgeThreshold ? -scrollSpeed :
+                clientX > innerWidth - edgeThreshold ? scrollSpeed : 0;
+      const dy = clientY < edgeThreshold ? -scrollSpeed :
+                clientY > innerHeight - edgeThreshold ? scrollSpeed : 0;
+
+      requestAnimationFrame(() => {
+        setViewport({
+          x: viewport.x + dx,
+          y: viewport.y + dy,
+          zoom: viewport.zoom
+        });
+      });
+    }
+  }, [setViewport, viewport]);
+
+  // Optimize viewport size updates
   const debouncedSetViewportSize = useMemo(() => 
     debounce((width: number, height: number) => {
-      setViewportSize({ width, height });
-    }, 100)
+      requestAnimationFrame(() => {
+        setViewportSize({ width, height });
+      });
+    }, 400) // Increased debounce time for better performance
   , [setViewportSize]);
 
-  // Optimize resize listener
+  // Optimized resize observer with throttling
   useEffect(() => {
+    let rafId: number;
+    let lastUpdate = 0;
+    const updateThreshold = 32; // ~30fps
+
     const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        debouncedSetViewportSize(width, height);
+      const now = Date.now();
+      if (now - lastUpdate >= updateThreshold) {
+        lastUpdate = now;
+        
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
+        
+        rafId = requestAnimationFrame(() => {
+          for (const entry of entries) {
+            const { width, height } = entry.contentRect;
+            debouncedSetViewportSize(width, height);
+          }
+        });
       }
     });
 
@@ -100,19 +209,37 @@ const FlowContent = memo(() => {
     }
 
     return () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
       resizeObserver.disconnect();
     };
   }, [debouncedSetViewportSize]);
 
+  const memoizedNodes = useMemo(() => nodes, [nodes]);
+  const memoizedEdges = useMemo(() => edges, [edges]);
+
   return (
-    <div id="whiteboard-container" style={{ width: '100%', height: '100vh' }}>
+    <div 
+      id="whiteboard-container" 
+      style={{ 
+        width: '100%', 
+        height: '100vh',
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        perspective: '1000px',
+        overflow: 'hidden', // Prevent scrollbars during edge scrolling
+        position: 'relative' // Ensure proper stacking context
+      }}
+      onMouseMove={handleEdgeScroll}
+    >
       <Flow
         className={styles.whiteboardFlow}
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        nodes={memoizedNodes}
+        edges={memoizedEdges}
+        onNodesChange={memoizedOnNodesChange}
+        onEdgesChange={memoizedOnEdgesChange}
+        onConnect={memoizedOnConnect}
         onMoveEnd={handleMoveEnd as OnMoveEnd}
         nodeTypes={nodeTypes}
         fitView={false}
@@ -135,14 +262,21 @@ const FlowContent = memo(() => {
         edgesFocusable={true}
         elementsSelectable={true}
         preventScrolling={true}
+        snapToGrid={true} // Add grid snapping for smoother movement
+        snapGrid={[10, 10]} // 10px grid for smooth snapping
         style={{ 
           width: '100%', 
           height: '100%',
           background: 'transparent',
-          touchAction: 'none'
+          touchAction: 'none',
+          willChange: 'transform',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          contain: 'paint layout size' // Optimize paint and layout
         }}
         proOptions={{ 
           hideAttribution: true,
+          account: 'paid-pro'
         }}
       >
         <Background 
@@ -163,6 +297,8 @@ const FlowContent = memo(() => {
       </Flow>
     </div>
   );
+}, () => {
+  return false;
 });
 
 FlowContent.displayName = 'FlowContent';

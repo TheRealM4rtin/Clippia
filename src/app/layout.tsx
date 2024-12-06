@@ -12,6 +12,7 @@ import '@react95/core/themes/win95.css';
 import React from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import '@/styles/style.scss';
+import PurchaseButton from '@/components/PurchaseButton';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const geistSans = localFont({
@@ -42,6 +43,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           {children}
+          <PurchaseButton />
         </AuthProvider>
       </body>
     </html>

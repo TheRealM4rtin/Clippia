@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import rateLimit from '@/lib/rate-limit';
+import { rateLimit } from '@/lib/rate-limit';
 
-const limiter = rateLimit({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 500, // Max 500 users per second
-});
+const limiter = {
+  check: async (limit: number) => {
+    const result = await rateLimit('feedback', limit, 60);
+    if (!result.success) {
+      throw new Error('Rate limit exceeded');
+    }
+  }
+};
 
 export async function POST(request: Request) {
   try {
-    await limiter.check(5, 'FEEDBACK_CACHE_TOKEN'); // 5 requests per minute
+    await limiter.check(5); // 5 requests per minute
   } catch {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
   }
