@@ -1,14 +1,8 @@
 // /app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/utils/supabase/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const STORE_URL = "https://clippia.lemonsqueezy.com/";
 
 export async function POST(request: Request) {
   try {
@@ -18,9 +12,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId, userEmail } = await request.json();
+    const { userId, userEmail, variantId } = await request.json();
 
-    if (!userId || !userEmail) {
+    if (!userId || !userEmail || !variantId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -51,16 +45,19 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+    
+    // Construct checkout URL with the variant ID and prefilled data
+    const checkoutUrl = new URL(
+      `https://clippia.lemonsqueezy.com/checkout/buy/${variantId}`
+    );
 
-    const storeUrl = new URL(STORE_URL);
-    storeUrl.searchParams.append("custom[user_id]", userId);
-    storeUrl.searchParams.append("checkout[email]", userEmail);
-    storeUrl.searchParams.append("prefill[email]", userEmail);
-    // storeUrl.searchParams.append("test", "true");
+    // Add user data as parameters
+    checkoutUrl.searchParams.append("custom[user_id]", userId);
+    checkoutUrl.searchParams.append("checkout[email]", userEmail);
 
-    console.log("Generated store URL:", storeUrl.toString());
+    console.log("Generated checkout URL:", checkoutUrl.toString());
 
-    return NextResponse.json({ url: storeUrl.toString() });
+    return NextResponse.json({ url: checkoutUrl.toString() });
   } catch (error) {
     console.error("Checkout error:", error);
     return NextResponse.json(

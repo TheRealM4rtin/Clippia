@@ -9,6 +9,12 @@ import { WindowData } from '@/types/window';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/utils/supabase/client';
 
+declare global {
+  interface Window {
+    selectPlan: (variantId: string) => void;
+  }
+}
+
 const supabase = createClient();
 const WINDOW_SPACING = 30;
 
@@ -17,10 +23,10 @@ const Panel: React.FC = memo(() => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, loading, session } = useAuth();
-  
-  const { 
+
+  const {
     flow: { nodes },
-    windows: { windows }, 
+    windows: { windows },
     addWindow,
     removeWindow,
     ui: { backgroundColor },
@@ -38,93 +44,75 @@ const Panel: React.FC = memo(() => {
   // Add useEffect to debug auth state changes
   useEffect(() => {
     const checkAuth = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Current session:', session);
-        if (session && !user) {
-            // Force refresh auth context if we have a session but no user
-            await supabase.auth.refreshSession();
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session);
+      if (session && !user) {
+        // Force refresh auth context if we have a session but no user
+        await supabase.auth.refreshSession();
+      }
     };
     checkAuth();
   }, [user]);
 
-  const handlePurchase = async () => {
-    setIsLoading(true);
-    setError(null);
 
-    try {
-      // Session checks
-      if (!session) {
-        setError('Please sign in to upgrade your account');
-        return;
-      }
+  const handleShowPlans = useCallback(() => {
+    const existingPlans = windows.find(w => w.id === 'subscription-plans');
 
-      if (loading) {
-        setError('Please wait while we load your account details');
-        return;
-      }
+    if (existingPlans?.id) {
+      removeWindow(existingPlans.id);
+      onNodesChange([{
+        type: 'remove',
+        id: existingPlans.id,
+      }]);
+    } else {
+      const viewport = getViewport();
+      const maxZIndex = Math.max(0, ...windows.map(w => w.zIndex || 0)) + 1;
 
-      const userId = session.user.id;
-      const userEmail = session.user.email;
-
-      if (!userEmail) {
-        setError('Unable to retrieve user email');
-        return;
-      }
-
-      console.log('Starting checkout process for user:', userId);
-
-      // Call your checkout endpoint
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+      const newWindow = {
+        id: 'subscription-plans',
+        title: 'Select Plan',
+        content: '',
+        type: 'plans' as const,
+        position: {
+          x: (window.innerWidth / 2 - 200) / viewport.zoom - viewport.x,
+          y: (window.innerHeight / 2 - 150) / viewport.zoom - viewport.y
         },
-        body: JSON.stringify({ 
-          userId,
-          userEmail 
-        })
-      });
+        size: { width: 500, height: 400 },
+        zIndex: maxZIndex,
+        session: session
+      };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
-      }
-
-      // Redirect to Lemon Squeezy store
-      const checkoutUrl = data.url;
-      if (checkoutUrl) {
-        console.log('Redirecting to store:', checkoutUrl);
-        window.location.href = checkoutUrl;
-      } else {
-        throw new Error('No checkout URL returned');
-      }
-    } catch (err) {
-      console.error('Checkout error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create checkout session');
-    } finally {
-      setIsLoading(false);
+      addWindow(newWindow);
+      onNodesChange([{
+        type: 'add',
+        item: {
+          id: newWindow.id,
+          type: 'plans',
+          position: newWindow.position,
+          data: newWindow,
+        }
+      }]);
     }
-  };
+  }, [windows, removeWindow, onNodesChange, addWindow, getViewport, session]);
+
+
 
   const handleAddWindow = useCallback(() => {
     const existingWindows = nodes.filter(n => n.type === 'text');
     const offset = existingWindows.length * WINDOW_SPACING;
-    
+
     const viewport = getViewport();
-    
+
     // Calculate position in viewport coordinates
     const screenX = (window.innerWidth / 2 - 150 + offset) / viewport.zoom - viewport.x;
     const screenY = (window.innerHeight / 2 - 100 + offset) / viewport.zoom - viewport.y;
-    
+
     const newWindow: Partial<WindowData> = {
       id: `window-${Date.now()}`,
       title: 'New Window',
       content: '',
       type: 'text',
-      position: { 
+      position: {
         x: screenX,
         y: screenY
       },
@@ -132,11 +120,11 @@ const Panel: React.FC = memo(() => {
       zIndex: Math.max(...windows.map(w => w.zIndex || 0)) + 1,
       isNew: true
     };
-    
+
     // Check if window would go off screen
     const maxX = (window.innerWidth - 300) / viewport.zoom - viewport.x;
     const maxY = (window.innerHeight - 200) / viewport.zoom - viewport.y;
-    
+
     if (screenX > maxX || screenY > maxY) {
       // Reset to initial position with small offset
       const resetOffset = (existingWindows.length % 3) * WINDOW_SPACING;
@@ -145,7 +133,7 @@ const Panel: React.FC = memo(() => {
         y: (window.innerHeight / 2 - 100 + resetOffset) / viewport.zoom - viewport.y
       };
     }
-    
+
     addWindow(newWindow);
     onNodesChange([{
       type: 'add',
@@ -161,7 +149,7 @@ const Panel: React.FC = memo(() => {
   }, [nodes, windows, addWindow, onNodesChange, getViewport]);
 
   const handleFitView = useCallback(() => {
-    fitView({ 
+    fitView({
       padding: 0.2,
       includeHiddenNodes: true,
       duration: 200
@@ -170,7 +158,7 @@ const Panel: React.FC = memo(() => {
 
   const handleOpenFeedback = useCallback(() => {
     const existingFeedback = windows.find(w => w.type === 'feedback');
-    
+
     if (existingFeedback?.id) {
       removeWindow(existingFeedback.id);
       onNodesChange([{
@@ -180,11 +168,11 @@ const Panel: React.FC = memo(() => {
     } else {
       const viewport = getViewport();
       const maxZIndex = Math.max(0, ...windows.map(w => w.zIndex || 0)) + 1;
-      
+
       // Calculate center position in viewport coordinates
       const centerX = (window.innerWidth / 2 - 200) / viewport.zoom - viewport.x;
       const centerY = (window.innerHeight / 2 - 150) / viewport.zoom - viewport.y;
-      
+
       const newWindow = {
         id: `feedback-${Date.now()}`,
         title: 'Feedback.exe',
@@ -197,7 +185,7 @@ const Panel: React.FC = memo(() => {
         size: { width: 400, height: 300 },
         zIndex: maxZIndex,
       };
-      
+
       addWindow(newWindow);
       onNodesChange([{
         type: 'add',
@@ -235,8 +223,8 @@ const Panel: React.FC = memo(() => {
           <ButtonPanel.Button onClick={handleFitView}>
             Fit View
           </ButtonPanel.Button>
-          <ButtonPanel.Button 
-            onClick={handlePurchase}
+          <ButtonPanel.Button
+            onClick={handleShowPlans}
             disabled={isLoading}
             className={isLoading ? 'opacity-50 cursor-not-allowed' : ''}
           >
@@ -254,7 +242,7 @@ const Panel: React.FC = memo(() => {
 
       <div className={styles.section}>
         <p>Color Background:</p>
-        <ColorPicker 
+        <ColorPicker
           selectedColor={backgroundColor || '#FFFFFF'}
           onColorChange={handleColorChange}
         />

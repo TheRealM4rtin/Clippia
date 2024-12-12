@@ -46,6 +46,16 @@
   animation: windowAppear 0.3s ease-out;
 }
 
+.resizeHandle {
+  position: absolute;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.resizeHandle:hover {
+  background-color: rgba(0, 0, 128, 0.1);
+}
+
 @keyframes windowAppear {
   from {
     opacity: 0;

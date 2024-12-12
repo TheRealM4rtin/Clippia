@@ -1,15 +1,20 @@
-import { Node, XYPosition, NodeProps } from '@xyflow/react';
+import { Editor } from "@tiptap/react";
+import { Node, NodeProps, XYPosition } from "@xyflow/react";
 
-export interface WindowPosition extends XYPosition {
+// Window Types
+export type WindowType =
+  | "text"
+  | "myComputer"
+  | "login"
+  | "feedback"
+  | "image"
+  | "assistant3D"
+  | "plans";
+
+// Base Position & Size Types
+export interface Position extends XYPosition {
   x: number;
   y: number;
-}
-
-export interface DragStartPos {
-  x: number;
-  y: number;
-  offsetX: number;
-  offsetY: number;
 }
 
 export interface Size {
@@ -17,74 +22,66 @@ export interface Size {
   height: number;
 }
 
-export type WindowType = 'text' | 'myComputer' | 'login' | 'feedback' | 'image' | 'assistant3D';
+// Drag & Resize Types
+export interface DragStartPos {
+  x: number;
+  y: number;
+  offsetX: number;
+  offsetY: number;
+}
 
-export interface BaseWindowData {
-  id?: string;
+// Base window properties
+export interface BaseWindowProps {
+  id: string;
   title: string;
-  content: string;
-  type: WindowType;
-  position?: WindowPosition;
+  content?: string;
+  position: Position;
   size?: Size;
-  zIndex?: number;
+  zIndex: number;
   isReadOnly?: boolean;
-  dragging?: boolean;
   isNew?: boolean;
+  windowType: WindowType; // Changed from 'type' to 'windowType' to avoid conflict
   [key: string]: unknown;
 }
 
-export interface WindowData extends BaseWindowData {
+// Window data that includes base props
+export interface WindowData extends BaseWindowProps {
+  data?: Record<string, unknown>;
+}
+
+// ReactFlow Node with our WindowData
+export interface FlowWindowNode extends Node {
+  data: WindowData;
   type: WindowType;
 }
 
-export interface MyComputerData extends Node<WindowData> {
-  type: 'myComputer';
-  data: WindowData & { type: 'myComputer' };
-  dragging: boolean;
-  zIndex: number;
-  position: XYPosition;
-  [key: string]: unknown;
+// Props for TextWindow component
+export interface TextWindowProps extends NodeProps {
+  id: string;
+  data: WindowData & {
+    windowType: "text";
+    content: string;
+  };
+  selected?: boolean;
 }
 
-export interface TextData extends WindowData {
-  type: 'text';
+// Editor Types
+export interface EditorConfig {
+  content: string;
+  editable: boolean;
+  isNew?: boolean;
+  isReadOnly?: boolean;
+  onUpdate?: (props: { editor: Editor }) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-export interface LoginData extends WindowData {
-  type: 'login';
-}
-
-export interface FeedbackData extends WindowData {
-  type: 'feedback';
-}
-
-export interface ImageData extends WindowData {
-  type: 'image';
-}
-
-export interface Assistant3DData extends WindowData {
-  type: 'assistant3D';
-}
-
-export type NodeData = Node<
-  | MyComputerData 
-  | TextData 
-  | LoginData 
-  | FeedbackData 
-  | ImageData 
-  | Assistant3DData
->;
-
-export type NodeTypes = {
-  [K in WindowType]: React.ComponentType<NodeProps<NodeData>>;
-};
-
-// Type guard
-export function isWindowData(data: unknown): data is WindowData {
+// Type Guards
+export const isWindowData = (data: unknown): data is WindowData => {
   return (
-    typeof data === 'object' &&
+    typeof data === "object" &&
     data !== null &&
-    'type' in data &&
-    typeof (data as WindowData).type === 'string'
+    "windowType" in data &&
+    typeof (data as WindowData).windowType === "string"
   );
-}
+};

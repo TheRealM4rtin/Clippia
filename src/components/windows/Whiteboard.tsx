@@ -29,6 +29,7 @@ import ImageNode from '@/components/nodes/ImageNode'
 import Assistant3DNode from '@/components/nodes/Assistant3DNode'
 import animations from '@/styles/animations.module.css'
 import { NodeData, NodeTypes } from '@/types/window'
+import SelectPlansWindow from '@/components/panel/windows/SelectPlansWindow'
 
 // Define node types with correct keys matching the window types
 const nodeTypes: NodeTypes = {
@@ -37,7 +38,8 @@ const nodeTypes: NodeTypes = {
   feedback: FeedbackWindow as ComponentType<NodeProps<NodeData>>,
   login: LoginWindow as ComponentType<NodeProps<NodeData>>,
   image: ImageNode as ComponentType<NodeProps<NodeData>>,
-  assistant3D: Assistant3DNode as ComponentType<NodeProps<NodeData>>
+  assistant3D: Assistant3DNode as ComponentType<NodeProps<NodeData>>,
+  plans: SelectPlansWindow as ComponentType<NodeProps<NodeData>>
 };
 
 // Create a separate component for the Flow content
