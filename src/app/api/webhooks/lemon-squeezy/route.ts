@@ -9,6 +9,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const VARIANT_TO_PLAN = {
+  "623005": "basic",
+  "623007": "early_adopter",
+  "623009": "support",
+};
+
 export async function POST(request: Request) {
   console.log('🔔 Webhook received');
   
@@ -60,7 +66,6 @@ export async function POST(request: Request) {
       case 'order_created': {
         console.log('💰 Processing order_created event');
         
-        // First, verify current status
         const { data: currentCheckout, error: checkError } = await supabase
           .from('checkout_attempts')
           .select('*')
@@ -71,7 +76,6 @@ export async function POST(request: Request) {
 
         console.log('Current checkout status:', { currentCheckout, checkError });
 
-        // Update checkout attempt
         const { error: checkoutError, data: checkoutData } = await supabase
           .from('checkout_attempts')
           .update({ 
@@ -120,13 +124,15 @@ export async function POST(request: Request) {
       case 'subscription_updated':
       case 'subscription_resumed': {
         console.log(`Processing ${eventName} event`);
+        const plan = VARIANT_TO_PLAN[event.data.attributes.variant_id as keyof typeof VARIANT_TO_PLAN] || "basic";
+        
         const { error: upsertError } = await supabase
           .from('subscriptions')
           .upsert({
             user_id: userId,
             subscription_id: event.data.id,
             status: 'active',
-            plan: 'pro',
+            plan: plan,
             current_period_end: new Date(event.data.attributes.ends_at),
           });
 

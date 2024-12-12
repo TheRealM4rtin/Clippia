@@ -16,7 +16,7 @@ const Panel: React.FC = memo(() => {
   const panelWidth = 250;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, loading, session, refreshAuth } = useAuth();
+  const { user, loading, session } = useAuth();
   
   const { 
     flow: { nodes },
@@ -53,58 +53,59 @@ const Panel: React.FC = memo(() => {
     setError(null);
 
     try {
-        if (!session) {
-            setError('Please sign in to upgrade your account');
-            await refreshAuth();
-            return;
-        }
+      // Session checks
+      if (!session) {
+        setError('Please sign in to upgrade your account');
+        return;
+      }
 
-        if (loading) {
-            setError('Please wait while we load your account details');
-            return;
-        }
+      if (loading) {
+        setError('Please wait while we load your account details');
+        return;
+      }
 
-        const userId = session.user.id;
-        console.log('Starting checkout process for user:', userId);
+      const userId = session.user.id;
+      const userEmail = session.user.email;
 
-        const response = await fetch('/api/checkout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({ userId })
-        });
+      if (!userEmail) {
+        setError('Unable to retrieve user email');
+        return;
+      }
 
-        console.log('Checkout response status:', response.status);
+      console.log('Starting checkout process for user:', userId);
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-            const text = await response.text();
-            console.error('Non-JSON response:', text);
-            throw new Error('Server returned non-JSON response');
-        }
+      // Call your checkout endpoint
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          userId,
+          userEmail 
+        })
+      });
 
-        const data = await response.json();
-        console.log('Checkout response data:', data);
+      const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to create checkout');
-        }
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
 
-        const checkoutUrl = data.data?.attributes?.url;
-        if (checkoutUrl) {
-            console.log('Redirecting to checkout:', checkoutUrl);
-            window.location.href = checkoutUrl;
-        } else {
-            console.error('Checkout response:', data);
-            throw new Error('No checkout URL returned');
-        }
+      // Redirect to Lemon Squeezy store
+      const checkoutUrl = data.url;
+      if (checkoutUrl) {
+        console.log('Redirecting to store:', checkoutUrl);
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (err) {
-        console.error('Checkout error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to create checkout session');
+      console.error('Checkout error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create checkout session');
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
