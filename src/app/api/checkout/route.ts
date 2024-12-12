@@ -55,7 +55,8 @@ export async function POST(request: Request) {
     const storeUrl = new URL(STORE_URL);
     storeUrl.searchParams.append("custom[user_id]", userId);
     storeUrl.searchParams.append("checkout[email]", userEmail);
-    storeUrl.searchParams.append("test", "true");
+    storeUrl.searchParams.append("prefill[email]", userEmail);
+    // storeUrl.searchParams.append("test", "true");
 
     console.log("Generated store URL:", storeUrl.toString());
 
