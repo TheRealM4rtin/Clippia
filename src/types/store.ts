@@ -1,6 +1,6 @@
 import { Node, Edge, NodeChange, EdgeChange, Connection } from '@xyflow/react';
 import { User } from '@supabase/supabase-js';
-import { WindowData, WindowPosition as Position, Size } from '@/types/window';
+import { WindowData, Position, Size } from '@/types/window';
 
 export interface ViewportState {
   x: number;

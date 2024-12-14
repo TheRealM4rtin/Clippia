@@ -26,7 +26,7 @@ export const createFlowSlice: StateCreator<AppState, [], [], FlowActions> = (
           const dimensionChange = dimensionChanges.find(
             (change) => change.id === window.id
           );
-          if (dimensionChange && "dimensions" in dimensionChange) {
+          if (dimensionChange && "dimensions" in dimensionChange && dimensionChange.dimensions) {
             return {
               ...window,
               size: {

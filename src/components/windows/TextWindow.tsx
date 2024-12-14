@@ -1,4 +1,4 @@
-import React, { memo, useRef, useCallback, useEffect } from 'react';
+import React, { memo, useRef, useEffect } from 'react';
 import { NodeProps, NodeResizer } from '@xyflow/react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { WindowData } from '@/types/window';

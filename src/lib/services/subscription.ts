@@ -340,13 +340,13 @@ export const getSubscriptionTiers = () => {
 };
 
 export const getSubscriptionTier = (id: string) => {
-  return SUBSCRIPTION_TIERS.find(tier => tier.id === id);
+  return id in SUBSCRIPTION_TIERS ? SUBSCRIPTION_TIERS[id as keyof typeof SUBSCRIPTION_TIERS] : null;
 };
 
-export const getSubscriptionVariantId = (id: string) => {
-  const tier = getSubscriptionTier(id);
-  return tier?.variantId;
-};
+// export const getSubscriptionVariantId = (id: string) => {
+//   const tier = getSubscriptionTier(id);
+//   return tier?.variantId;
+// };
 
 // Export a singleton instance
 export const subscriptionService = SubscriptionService.getInstance();

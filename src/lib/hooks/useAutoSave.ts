@@ -1,9 +1,8 @@
-import { useEffect, useRef, useCallback } from "react";
-import { debounce } from "@/lib/utils/components/utils";
+import { useEffect, useRef, useMemo } from "react";
+import debounce from "lodash/debounce";
 import { AUTOSAVE_DELAY } from "@/lib/constants/constants";
 
 interface UseAutoSaveProps {
-  id: string;
   content: string;
   onSave: (content: string) => void;
   enabled?: boolean;
@@ -11,7 +10,6 @@ interface UseAutoSaveProps {
 }
 
 export function useAutoSave({
-  id,
   content,
   onSave,
   enabled = true,
@@ -21,24 +19,20 @@ export function useAutoSave({
   const savingRef = useRef<boolean>(false);
 
   // Create debounced save function
-  const debouncedSave = useCallback(
-    debounce(async (contentToSave: string) => {
+  const debouncedSave = useMemo(() => {
+    const save = async (contentToSave: string) => {
       if (savingRef.current) return;
 
       try {
         savingRef.current = true;
         await onSave(contentToSave);
-        // Update previous content ref after successful save
-        previousContentRef.current = contentToSave;
-      } catch (error) {
-        console.error("Error saving content:", error);
-        // Optionally trigger error handling/notification here
       } finally {
         savingRef.current = false;
       }
-    }, saveDelay),
-    [onSave, saveDelay]
-  );
+    };
+
+    return debounce(save, saveDelay);
+  }, [onSave, saveDelay]);
 
   // Handle content changes
   useEffect(() => {

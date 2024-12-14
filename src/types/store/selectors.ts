@@ -1,5 +1,5 @@
 import { AppState, ViewportState } from './state';
-import { WindowData, WindowType } from '../components/window';
+import { WindowData, WindowType } from '@/types/window';
 import { Edge } from '@xyflow/react';
 
 // Flow Selectors

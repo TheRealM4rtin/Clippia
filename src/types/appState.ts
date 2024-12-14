@@ -1,10 +1,10 @@
 import { Node, Edge, OnNodesChange, OnEdgesChange, OnConnect } from '@xyflow/react';
-import { WindowData, NodeData } from '@/types/window';
+import { WindowData } from '@/types/window';
 import { User } from '@supabase/supabase-js';
 
 export interface AppState {
   // React Flow State
-  nodes: Node<NodeData>[];
+  nodes: Node<WindowData>[];
   edges: Edge[];
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;

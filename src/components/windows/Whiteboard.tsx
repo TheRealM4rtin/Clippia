@@ -17,6 +17,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css';
 import debounce from 'lodash/debounce'
+import { Session } from '@supabase/supabase-js'
 
 import { useAppStore } from '@/lib/store'
 import TextWindow from './TextWindow'
@@ -28,18 +29,46 @@ import LoginWindow from '@/components/panel/windows/LoginWindow';
 import ImageNode from '@/components/nodes/ImageNode'
 import Assistant3DNode from '@/components/nodes/Assistant3DNode'
 import animations from '@/styles/animations.module.css'
-import { NodeData, NodeTypes } from '@/types/window'
+import { WindowType, WindowData } from '@/types/window'
 import SelectPlansWindow from '@/components/panel/windows/SelectPlansWindow'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Define node types with correct keys matching the window types
+type WindowNodeProps = Omit<NodeProps, 'data'> & { data: WindowData };
+
+// Wrapper for SelectPlansWindow
+const PlansWindowWrapper: React.FC<WindowNodeProps> = (props) => {
+  const { session } = useAuth();
+  const handleError = useCallback((error: string) => {
+    console.error('Plans window error:', error);
+  }, []);
+
+  return (
+    <SelectPlansWindow
+      {...props}
+      data={{
+        ...props.data,
+        session: session as Session,
+        onError: handleError,
+        zIndex: props.data.zIndex || 0
+      }}
+    />
+  );
+};
+
+// Define node types with correct keys matching the window types
+type NodeTypes = {
+  [K in WindowType]: ComponentType<WindowNodeProps>;
+};
+
 const nodeTypes: NodeTypes = {
-  text: TextWindow as ComponentType<NodeProps<NodeData>>,
-  myComputer: MyComputerWindow as ComponentType<NodeProps<NodeData>>,
-  feedback: FeedbackWindow as ComponentType<NodeProps<NodeData>>,
-  login: LoginWindow as ComponentType<NodeProps<NodeData>>,
-  image: ImageNode as ComponentType<NodeProps<NodeData>>,
-  assistant3D: Assistant3DNode as ComponentType<NodeProps<NodeData>>,
-  plans: SelectPlansWindow as ComponentType<NodeProps<NodeData>>
+  text: TextWindow as ComponentType<WindowNodeProps>,
+  myComputer: MyComputerWindow as ComponentType<WindowNodeProps>,
+  feedback: FeedbackWindow as ComponentType<WindowNodeProps>,
+  login: LoginWindow as ComponentType<WindowNodeProps>,
+  image: ImageNode as ComponentType<WindowNodeProps>,
+  assistant3D: Assistant3DNode as ComponentType<WindowNodeProps>,
+  plans: PlansWindowWrapper as ComponentType<WindowNodeProps>
 };
 
 // Create a separate component for the Flow content
@@ -62,6 +91,24 @@ const FlowContent = memo(() => {
   const nodeUpdateQueue = useRef<NodeChange[]>([]);
   const edgeUpdateQueue = useRef<EdgeChange[]>([]);
   const isProcessingUpdates = useRef(false);
+
+  // Process batched node updates
+  const processNodeUpdates = useCallback(() => {
+    if (isProcessingUpdates.current || nodeUpdateQueue.current.length === 0) return;
+    
+    isProcessingUpdates.current = true;
+    const updates = [...nodeUpdateQueue.current];
+    nodeUpdateQueue.current = [];
+
+    requestAnimationFrame(() => {
+      onNodesChange(updates);
+      isProcessingUpdates.current = false;
+      
+      if (nodeUpdateQueue.current.length > 0) {
+        processNodeUpdates();
+      }
+    });
+  }, [onNodesChange]);
 
   // Add Assistant3D node on mount - with proper cleanup
   useEffect(() => {
@@ -87,25 +134,7 @@ const FlowContent = memo(() => {
       });
       processNodeUpdates();
     }
-  }, [nodes]);
-
-  // Process batched node updates
-  const processNodeUpdates = useCallback(() => {
-    if (isProcessingUpdates.current || nodeUpdateQueue.current.length === 0) return;
-    
-    isProcessingUpdates.current = true;
-    const updates = [...nodeUpdateQueue.current];
-    nodeUpdateQueue.current = [];
-
-    requestAnimationFrame(() => {
-      onNodesChange(updates);
-      isProcessingUpdates.current = false;
-      
-      if (nodeUpdateQueue.current.length > 0) {
-        processNodeUpdates();
-      }
-    });
-  }, [onNodesChange]);
+  }, [nodes, processNodeUpdates]);
 
   // Process batched edge updates
   const processEdgeUpdates = useCallback(() => {

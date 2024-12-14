@@ -44,7 +44,7 @@ const ReadOnlyWindow: React.FC<ReadOnlyWindowProps> = ({ window, onClose, onUpda
             </div>
           </div>
           <div className="window-body">
-            <div dangerouslySetInnerHTML={{ __html: window.content }} />
+            <div dangerouslySetInnerHTML={{ __html: window.content ?? '' }} />
           </div>
         </div>
       </Draggable>

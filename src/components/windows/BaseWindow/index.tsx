@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaseWindowProps } from '@/types/components/window';
+import { BaseWindowProps } from '@/types/window';
 import styles from './styles.module.css';
 
 export interface BaseWindowComponentProps extends BaseWindowProps {
