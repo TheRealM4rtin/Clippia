@@ -11,7 +11,7 @@ import { createClient } from '@/lib/utils/supabase/client';
 
 declare global {
   interface Window {
-    selectPlan: (variantId: string) => void;
+    selectPlan?: (variantId: string) => void;
   }
 }
 
@@ -20,7 +20,7 @@ const WINDOW_SPACING = 30;
 
 const Panel: React.FC = memo(() => {
   const panelWidth = 250;
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, loading, session } = useAuth();
 
@@ -54,9 +54,13 @@ const Panel: React.FC = memo(() => {
     checkAuth();
   }, [user]);
 
-
   const handleShowPlans = useCallback(() => {
-    const existingPlans = windows.find(w => w.id === 'subscription-plans');
+    if (!user) {
+      setError('Please sign in to view plans');
+      return;
+    }
+
+    const existingPlans = windows.find(w => w.type === 'plans');
 
     if (existingPlans?.id) {
       removeWindow(existingPlans.id);
@@ -68,18 +72,21 @@ const Panel: React.FC = memo(() => {
       const viewport = getViewport();
       const maxZIndex = Math.max(0, ...windows.map(w => w.zIndex || 0)) + 1;
 
+      const centerX = (window.innerWidth / 2 - 200) / viewport.zoom - viewport.x;
+      const centerY = (window.innerHeight / 2 - 150) / viewport.zoom - viewport.y;
+
       const newWindow = {
-        id: 'subscription-plans',
+        id: `plans-${Date.now()}`,
         title: 'Select Plan',
-        content: '',
         type: 'plans' as const,
         position: {
-          x: (window.innerWidth / 2 - 200) / viewport.zoom - viewport.x,
-          y: (window.innerHeight / 2 - 150) / viewport.zoom - viewport.y
+          x: centerX,
+          y: centerY
         },
-        size: { width: 500, height: 400 },
+        size: { width: 300, height: 250 },
         zIndex: maxZIndex,
-        session: session
+        session: session,
+        onError: setError
       };
 
       addWindow(newWindow);
@@ -93,9 +100,7 @@ const Panel: React.FC = memo(() => {
         }
       }]);
     }
-  }, [windows, removeWindow, onNodesChange, addWindow, getViewport, session]);
-
-
+  }, [windows, removeWindow, onNodesChange, addWindow, getViewport, session, user]);
 
   const handleAddWindow = useCallback(() => {
     const existingWindows = nodes.filter(n => n.type === 'text');

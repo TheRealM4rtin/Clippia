@@ -1,22 +1,8 @@
-import React from 'react';
-import { NodeProps, Handle, Position } from '@xyflow/react';
-import { WindowData } from '@/types/window';
+import React, { useRef, useState } from 'react';
+import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
+import commonStyles from '../style/common.module.css';
 import { Session } from '@supabase/supabase-js';
-
-interface PlanNodeData extends WindowData {
-  session: Session | null;
-  size: {
-    width: number;
-    height: number;
-  };
-  zIndex: number;
-  data: WindowData & { type: 'plans' };
-}
-
-interface PlanProps extends NodeProps<PlanNodeData> {
-  session: Session | null;
-}
 
 const SUBSCRIPTION_PLANS = [
   {
@@ -42,74 +28,102 @@ const SUBSCRIPTION_PLANS = [
   }
 ];
 
-const PlanWindow: React.FC<PlanProps> = ({ data, id, session }) => {
-  const { removeWindow, onNodesChange } = useAppStore();
+interface SelectPlansWindowProps extends NodeProps {
+  data: {
+    session: Session;
+    onError: (error: string) => void;
+    zIndex: number;
+  };
+}
+
+const SelectPlansWindow: React.FC<SelectPlansWindowProps> = ({ id, data }) => {
+  const { updateWindow, removeWindow, windows: { windows } } = useAppStore();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
+  const handleClick = () => {
+    const highestZIndex = Math.max(...windows.map(w => w.zIndex || 0)) + 1;
+    updateWindow(id, { zIndex: highestZIndex });
+  };
 
   const handleClose = () => {
     removeWindow(id);
-    onNodesChange([{ type: 'remove', id }]);
   };
 
   const handleSelectPlan = async (variantId: string) => {
-    if (!session?.user) return;
-    
+    if (!data.session?.user) {
+      data.onError('Please sign in to purchase a plan');
+      return;
+    }
+
     try {
+      setIsLoading(variantId);
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${data.session.access_token}`,
         },
         body: JSON.stringify({ 
-          userId: session.user.id,
-          userEmail: session.user.email,
-          variantId
+          userId: data.session.user.id,
+          userEmail: data.session.user.email,
+          variantId: variantId.toString()
         })
       });
 
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to create checkout session');
+      }
+
+      if (responseData.url) {
+        window.location.href = responseData.url;
       }
     } catch (error) {
       console.error('Checkout error:', error);
+      data.onError(error instanceof Error ? error.message : 'Failed to process checkout');
+    } finally {
+      setIsLoading(null);
     }
   };
 
   return (
-    <>
-      <Handle type="target" position={Position.Left} />
-      <div className="window" style={{ 
-        width: data.size?.width ?? 400,
-        height: data.size?.height ?? 'auto',
-        zIndex: data.zIndex 
-      }}>
-        <div className="title-bar">
-          <div className="title-bar-text">{data.title}</div>
-          <div className="title-bar-controls">
-            <button aria-label="Close" onClick={handleClose} />
-          </div>
-        </div>
-        <div className="window-body">
-          {SUBSCRIPTION_PLANS.map((plan) => (
-            <div key={plan.id} style={{ marginBottom: '16px' }}>
-              <div style={{ fontWeight: 'bold' }}>{plan.name}</div>
-              <div>{plan.price}</div>
-              <ul>
-                {plan.features.map((feature, i) => (
-                  <li key={i}>{feature}</li>
-                ))}
-              </ul>
-              <button onClick={() => handleSelectPlan(plan.variantId!)}>
-                Select {plan.name}
-              </button>
-            </div>
-          ))}
+    <div 
+      ref={nodeRef} 
+      className={commonStyles.window}
+      onClick={handleClick}
+      style={{ zIndex: data.zIndex as number }}
+    >
+      <div className={commonStyles.titleBar}>
+        <div className={commonStyles.titleBarText}>Select Plan</div>
+        <div className="title-bar-controls">
+          <button aria-label="Close" onClick={handleClose} />
         </div>
       </div>
-      <Handle type="source" position={Position.Right} />
-    </>
+      <div className={commonStyles.windowBody}>
+        {SUBSCRIPTION_PLANS.map((plan) => (
+          <div key={plan.id} style={{ marginBottom: '16px' }}>
+            <div style={{ fontWeight: 'bold' }}>{plan.name}</div>
+            <div>{plan.price}</div>
+            <ul>
+              {plan.features.map((feature, i) => (
+                <li key={i}>{feature}</li>
+              ))}
+            </ul>
+            <button 
+              className="button"
+              onClick={() => handleSelectPlan(plan.variantId!)}
+              disabled={isLoading === plan.variantId}
+            >
+              {isLoading === plan.variantId ? 'Processing...' : `Select ${plan.name}`}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
-export default PlanWindow;
+export default SelectPlansWindow;

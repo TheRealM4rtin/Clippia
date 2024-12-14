@@ -1,13 +1,13 @@
-import {createClient} from '@supabase/supabase-js'
-import type {Database} from '@/types/database.types'
-import {LEMON_SQUEEZY_CONFIG} from '@/config/lemon-squeezy'
-import {createHmac} from 'crypto'
-import {Subscription, SUBSCRIPTION_TIERS, SubscriptionTier, WebhookEvent} from '@/types/subscription'
-
-const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from "@/lib/supabase";
+import { LEMON_SQUEEZY_CONFIG } from "@/config/lemon-squeezy";
+import { type NewCheckout, type Checkout } from "@lemonsqueezy/lemonsqueezy.js";
+import { createHmac } from "crypto";
+import {
+  Subscription,
+  SUBSCRIPTION_TIERS,
+  SubscriptionTier,
+  WebhookEvent,
+} from "@/types/subscription";
 
 export class SubscriptionService {
   private static instance: SubscriptionService;
@@ -172,89 +172,6 @@ export class SubscriptionService {
   }
 
   /**
-   * Create a checkout URL for a subscription
-   */
-  public async createCheckoutUrl(
-    userId: string,
-    userEmail: string
-  ): Promise<string | null> {
-    try {
-      const variantId = LEMON_SQUEEZY_CONFIG.products.early_adopter.variantId;
-      const storeId = LEMON_SQUEEZY_CONFIG.storeId;
-
-      if (!variantId || !storeId) {
-        console.error("Missing required config:", { variantId, storeId });
-        return null;
-      }
-
-      const response = await fetch(
-        "https://api.lemonsqueezy.com/v1/checkouts",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${LEMON_SQUEEZY_CONFIG.apiKey}`,
-          },
-          body: JSON.stringify({
-            data: {
-              type: "checkouts",
-              attributes: {
-                checkout_data: {
-                  email: userEmail,
-                  custom: {
-                    user_id: userId,
-                  },
-                },
-                checkout_options: {
-                  success_url: `${LEMON_SQUEEZY_CONFIG.baseUrl}/checkout/success`,
-                  cancel_url: `${LEMON_SQUEEZY_CONFIG.baseUrl}/checkout/cancel`,
-                },
-              },
-              relationships: {
-                store: {
-                  data: {
-                    type: "stores",
-                    id: storeId,
-                  },
-                },
-                variant: {
-                  data: {
-                    type: "variants",
-                    id: variantId,
-                  },
-                },
-              },
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Lemon Squeezy API error:", {
-          status: response.status,
-          statusText: response.statusText,
-          errors: errorData.errors,
-        });
-        return null;
-      }
-
-      const data = await response.json();
-
-      if (!data?.data?.attributes?.url) {
-        console.error("Invalid response format from Lemon Squeezy:", data);
-        return null;
-      }
-
-      return data.data.attributes.url;
-    } catch (error) {
-      console.error("Error creating checkout:", error);
-      return null;
-    }
-  }
-
-  /**
    * Cancel a subscription
    */
   public async cancelSubscription(userId: string): Promise<boolean> {
@@ -328,60 +245,108 @@ export class SubscriptionService {
    * Create a checkout session for a subscription
    */
   public async createCheckoutSession(
-    userId: string,
-    tier: SubscriptionTier,
-    successUrl: string,
-    cancelUrl: string
-  ): Promise<string | null> {
-    try {
-      const product = LEMON_SQUEEZY_CONFIG.products[tier];
-      if (!product?.variantId) {
-        console.error("Invalid subscription tier or missing variant ID");
-        return null;
-      }
+  storeId: string | number,
+  variantId: string | number,
+  checkoutOptions: NewCheckout
+): Promise<Checkout | null> {
+  try {
+    const formattedStoreId = storeId.toString();
+    const formattedVariantId = variantId.toString();
 
-      const response = await fetch(
-        "https://api.lemonsqueezy.com/v1/checkouts",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${LEMON_SQUEEZY_CONFIG.apiKey}`,
+    const requestBody = {
+      data: {
+        type: "checkouts",
+        attributes: {
+          product_options: {
+            name: "Clippia Subscription",
+            description: "Subscribe to Clippia"
           },
-          body: JSON.stringify({
+          checkout_options: {
+            embed: true,
+            media: true,
+            logo: true,
+            desc: true,
+            discount: true,
+            subscription_preview: true
+          },
+          checkout_data: {
+            email: checkoutOptions.checkoutData?.email || "",
+            custom: {
+              user_id: checkoutOptions.checkoutData?.custom?.user_id || ""
+            }
+          },
+          expires_at: null,
+          preview: false,
+          test_mode: false
+        },
+        relationships: {
+          store: {
             data: {
-              type: "checkouts",
-              attributes: {
-                checkout_data: {
-                  custom: {
-                    user_id: userId,
-                  },
-                },
-                product_options: {
-                  enabled_variants: [product.variantId],
-                },
-                success_url: successUrl,
-                cancel_url: cancelUrl,
-              },
-            },
-          }),
+              type: "stores",
+              id: formattedStoreId
+            }
+          },
+          variant: {
+            data: {
+              type: "variants",
+              id: formattedVariantId
+            }
+          }
         }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to create checkout:", await response.text());
-        return null;
       }
+    };
 
-      const data = await response.json();
-      return data.data.attributes.url;
-    } catch (error) {
-      console.error("Error creating checkout:", error);
-      return null;
+    console.log('Full Lemon Squeezy request:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        Authorization: `Bearer ${LEMON_SQUEEZY_CONFIG.apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    // Get response body regardless of status
+    const responseText = await response.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch {
+      console.error("Failed to parse response as JSON:", responseText);
+      throw new Error("Invalid JSON response from Lemon Squeezy");
+    }
+
+    if (!response.ok) {
+      console.error('Lemon Squeezy API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseData
+      });
+      throw new Error(responseData?.errors?.[0]?.detail || 'Unknown Lemon Squeezy API error');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Checkout creation error:', error);
+    throw error;
     }
   }
 }
 
+export const getSubscriptionTiers = () => {
+  return SUBSCRIPTION_TIERS;
+};
+
+export const getSubscriptionTier = (id: string) => {
+  return SUBSCRIPTION_TIERS.find(tier => tier.id === id);
+};
+
+export const getSubscriptionVariantId = (id: string) => {
+  const tier = getSubscriptionTier(id);
+  return tier?.variantId;
+};
+
 // Export a singleton instance
-export const subscriptionService = SubscriptionService.getInstance()
+export const subscriptionService = SubscriptionService.getInstance();

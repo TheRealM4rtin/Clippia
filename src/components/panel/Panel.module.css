@@ -55,3 +55,38 @@
   gap: 8px;
   margin: 4px 0;
 }
+
+.plans-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-description {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.plan-button {
+  width: 100%;
+  padding: 8px;
+  background: silver;
+  border: 2px solid #dfdfdf;
+  border-right-color: #808080;
+  border-bottom-color: #808080;
+  color: black;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.plan-button:active {
+  border: 2px solid #808080;
+  border-right-color: #dfdfdf;
+  border-bottom-color: #dfdfdf;
+}
+
+.plan-button:hover {
+  background: #dfdfdf;
+}
