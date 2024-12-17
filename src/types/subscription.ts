@@ -7,7 +7,7 @@ export type SubscriptionStatus = Database['public']['Enums']['subscription_statu
 export interface Subscription {
   id: string
   user_id: string | null
-  plan: SubscriptionTier
+  plan: 'basic' | 'pro' | 'enterprise'
   status: SubscriptionStatus
   subscription_id: string
   current_period_end: string | null

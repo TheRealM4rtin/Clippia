@@ -8,6 +8,7 @@ import ColorPicker from '@/components/ui/ColorPicker';
 import { WindowData } from '@/types/window';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/utils/supabase/client';
+import UpgradeButton from './style/UpgradeButton';
 
 declare global {
   interface Window {
@@ -228,13 +229,11 @@ const Panel: React.FC = memo(() => {
           <ButtonPanel.Button onClick={handleFitView}>
             Fit View
           </ButtonPanel.Button>
-          <ButtonPanel.Button
+          <UpgradeButton
+            user={user}
+            isLoading={isLoading}
             onClick={handleShowPlans}
-            disabled={isLoading}
-            className={isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-          >
-            {isLoading ? 'Processing...' : '✨ Upgrade Now ✨'}
-          </ButtonPanel.Button>
+          />
         </ButtonPanel>
         {error && (
           <div className={styles.error}>
