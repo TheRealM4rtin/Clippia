@@ -42,21 +42,17 @@
 }
 
 .whiteboard {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background: transparent;
 }
 
 .canvasContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
+  position: relative;
   z-index: 1;
-  pointer-events: all;
 }
 
 .canvas {
@@ -88,31 +84,18 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url("/clouds.jpg");
-  background-size: 256px 256px;
-  background-repeat: repeat;
-  image-rendering: pixelated;
-  animation: moveClouds 60s linear infinite;
+  background: #ffffff;
   z-index: 0;
 }
 
-@keyframes moveClouds {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 256px 256px;
-  }
-}
-
 .windowsContainer {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 2;
 }
 
 .windowsContainer > * {
@@ -132,16 +115,8 @@
 }
 
 .whiteboardFlow {
-  position: relative;
-  z-index: 1;
-}
-
-.whiteboard {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-  background: transparent;
+  width: 100%;
+  height: 100%;
 }
 
 /* Add any specific window hover behaviors here */
@@ -153,5 +128,132 @@
   position: absolute;
   pointer-events: auto;
   z-index: 10000;
+}
+
+.panelContainer {
+  padding: 1rem;
+  z-index: 3;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  font-size: 1.2rem;
+  color: #333;
+  backdrop-filter: blur(4px);
+}
+
+.errorOverlay {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 1rem;
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  border-radius: 0.5rem;
+  color: #991b1b;
+  z-index: 9999;
+  max-width: 300px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.errorOverlay button {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.errorOverlay button:hover {
+  background-color: #b91c1c;
+}
+
+.upgradePrompt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  z-index: 9999;
+  animation: slideIn 0.3s ease-out;
+}
+
+.upgradePrompt h3 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  color: #1a1a1a;
+}
+
+.upgradePrompt p {
+  margin: 0 0 1.5rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.upgradePromptButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.upgradeButton {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.upgradeButton:hover {
+  background-color: #2563eb;
+}
+
+.cancelButton {
+  background-color: #e5e7eb;
+  color: #4b5563;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background-color: #d1d5db;
+  color: #374151;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 

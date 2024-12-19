@@ -31,7 +31,7 @@ const TextWindow: React.FC<NodeProps & { data: WindowData }> = memo(({ id, data,
       }
     })
   );
-  
+
 
   // Selective store access
   const updateWindow = useAppStore((state) => state.updateWindow);

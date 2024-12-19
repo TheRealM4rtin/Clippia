@@ -1,21 +1,18 @@
 import React, { useRef } from 'react';
-import { NodeProps } from '@xyflow/react';
+import { Computer, Notepad2 } from '@react95/icons';
 import { useAppStore } from '@/lib/store';
 import { useAuth } from '@/contexts/AuthContext';
-import { Computer, Notepad2 } from '@react95/icons';
+import { MyComputerProps } from '@/types/components';
 import commonStyles from '../style/common.module.css';
 import styles from '../style/MyComputerWindow.module.css';
-import { WindowData } from '@/types/window';
-
-type MyComputerProps = NodeProps<{
-  id: string;
-  position: { x: number; y: number };
-  data: WindowData & { type: 'myComputer' };
-}>;
 
 const MyComputerWindow: React.FC<MyComputerProps> = ({ 
   id, 
-  data
+  data,
+  positionAbsoluteX,
+  positionAbsoluteY,
+  width = 300,
+  height = 400
 }) => {
   const { updateWindow, removeWindow, addWindow, windows: { windows } } = useAppStore();
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -121,8 +118,10 @@ const MyComputerWindow: React.FC<MyComputerProps> = ({
       style={{ 
         zIndex: Math.min(data.zIndex || 0, 999999),
         position: 'absolute',
-        width: '300px',
-        height: '400px'
+        left: positionAbsoluteX,
+        top: positionAbsoluteY,
+        width: `${width}px`,
+        height: `${height}px`
       }}
     >
       <div className={commonStyles.titleBar}>

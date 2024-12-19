@@ -1,22 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function PurchaseButton() {
     const [isLoading, setIsLoading] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const supabase = createClientComponentClient();
-
-    const checkUser = useCallback(async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsLoggedIn(!!session);
-    }, [supabase.auth]);
-
-    useEffect(() => {
-        checkUser();
-    }, [checkUser]);
+    const { user } = useAuth();
 
     const handlePurchase = async () => {
         setIsLoading(true);
@@ -44,7 +34,7 @@ export default function PurchaseButton() {
         }
     };
 
-    if (!isLoggedIn) {
+    if (!user) {
         return null;
     }
 

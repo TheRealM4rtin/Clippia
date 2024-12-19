@@ -51,7 +51,7 @@ const UpgradeButton: React.FC<UpgradeButtonProps> = ({ user, isLoading, onClick 
         };
 
         fetchSubscription();
-    }, [user]);
+    }, [user, supabase]);
 
     // Beating animation timer
     useEffect(() => {

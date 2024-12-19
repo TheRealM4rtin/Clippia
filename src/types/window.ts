@@ -1,5 +1,7 @@
 import { Editor } from "@tiptap/react";
 import { Node, NodeProps, XYPosition } from "@xyflow/react";
+import { AuthUser } from '@/types/auth';
+import { Session } from '@supabase/supabase-js';
 
 // Window Types
 export type WindowType =
@@ -40,7 +42,7 @@ export interface BaseWindowProps {
   zIndex: number;
   isReadOnly?: boolean;
   isNew?: boolean;
-  windowType: WindowType; // Changed from 'type' to 'windowType' to avoid conflict
+  windowType: WindowType;
   [key: string]: unknown;
 }
 
@@ -85,3 +87,15 @@ export const isWindowData = (data: unknown): data is WindowData => {
     typeof (data as WindowData).windowType === "string"
   );
 };
+
+export interface PlansWindowData extends WindowData {
+  session: Session;
+  user: AuthUser;  // Use AuthUser type
+  onError: (error: string) => void;
+  zIndex: number;
+  windowType: 'plans';
+}
+
+export interface PlansWindowProps extends NodeProps {
+  data: PlansWindowData;
+}

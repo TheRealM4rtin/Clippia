@@ -1,8 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { NodeProps } from '@xyflow/react';
 import { useAppStore } from '@/lib/store';
 import commonStyles from '../style/common.module.css';
-import { Session } from '@supabase/supabase-js';
+import { PlansWindowProps } from '@/types/window';
 
 const SUBSCRIPTION_PLANS = [
   {
@@ -28,31 +27,24 @@ const SUBSCRIPTION_PLANS = [
   }
 ];
 
-interface SelectPlansWindowProps extends NodeProps {
-  data: {
-    session: Session;
-    onError: (error: string) => void;
-    zIndex: number;
-  };
-}
-
-const SelectPlansWindow: React.FC<SelectPlansWindowProps> = ({ id, data }) => {
+export const SelectPlansWindow: React.FC<PlansWindowProps> = (props) => {
+  const { user, session, onError, zIndex } = props.data;
   const { updateWindow, removeWindow, windows: { windows } } = useAppStore();
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const handleClick = () => {
     const highestZIndex = Math.max(...windows.map(w => w.zIndex || 0)) + 1;
-    updateWindow(id, { zIndex: highestZIndex });
+    updateWindow(props.id, { zIndex: highestZIndex });
   };
 
   const handleClose = () => {
-    removeWindow(id);
+    removeWindow(props.id);
   };
 
   const handleSelectPlan = async (variantId: string) => {
-    if (!data.session?.user) {
-      data.onError('Please sign in to purchase a plan');
+    if (!user || !session) {
+      onError('Please sign in to purchase a plan');
       return;
     }
 
@@ -63,11 +55,11 @@ const SelectPlansWindow: React.FC<SelectPlansWindowProps> = ({ id, data }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${data.session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ 
-          userId: data.session.user.id,
-          userEmail: data.session.user.email,
+          userId: user.id,
+          userEmail: user.email,
           variantId: variantId.toString()
         })
       });
@@ -83,7 +75,7 @@ const SelectPlansWindow: React.FC<SelectPlansWindowProps> = ({ id, data }) => {
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      data.onError(error instanceof Error ? error.message : 'Failed to process checkout');
+      onError(error instanceof Error ? error.message : 'Failed to process checkout');
     } finally {
       setIsLoading(null);
     }
@@ -94,7 +86,7 @@ const SelectPlansWindow: React.FC<SelectPlansWindowProps> = ({ id, data }) => {
       ref={nodeRef} 
       className={commonStyles.window}
       onClick={handleClick}
-      style={{ zIndex: data.zIndex as number }}
+      style={{ zIndex: zIndex as number }}
     >
       <div className={commonStyles.titleBar}>
         <div className={commonStyles.titleBarText}>Select Plan</div>
@@ -125,5 +117,3 @@ const SelectPlansWindow: React.FC<SelectPlansWindowProps> = ({ id, data }) => {
     </div>
   );
 };
-
-export default SelectPlansWindow;

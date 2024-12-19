@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { subscriptionService } from "@/lib/services/subscription";
+import { createCheckoutSession } from "@/lib/lemon-squeezy";
 
 const storeId = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID;
 if (!storeId) {
@@ -63,8 +63,8 @@ export async function POST(request: Request) {
     }
 
     try {
-      const checkoutData = await subscriptionService.createCheckoutSession(
-        process.env.NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID,
+      const checkoutData = await createCheckoutSession(
+        process.env.NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID!,
         body.variantId,
         {
           checkoutData: {

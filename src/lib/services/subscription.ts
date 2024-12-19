@@ -1,6 +1,5 @@
-import { supabase } from "@/lib/supabase";
-import { LEMON_SQUEEZY_CONFIG } from "@/config/lemon-squeezy";
-import { type NewCheckout, type Checkout } from "@lemonsqueezy/lemonsqueezy.js";
+import { getSupabaseClient } from "@/lib/supabase";
+import { LEMON_SQUEEZY_CONFIG } from "@/lib/lemon-squeezy";
 import { createHmac } from "crypto";
 import {
   Subscription,
@@ -12,7 +11,7 @@ import {
 export class SubscriptionService {
   private static instance: SubscriptionService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): SubscriptionService {
     if (!SubscriptionService.instance) {
@@ -39,6 +38,12 @@ export class SubscriptionService {
    * Process a webhook event
    */
   public async processWebhook(event: WebhookEvent): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      return false;
+    }
+
     const eventName = event.event_type;
     const userId = event.payload.meta.custom_data?.user_id;
 
@@ -105,6 +110,12 @@ export class SubscriptionService {
    * Get a user's subscription
    */
   public async getSubscription(userId: string): Promise<Subscription | null> {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      return null;
+    }
+
     const { data, error } = await supabase
       .from("subscriptions")
       .select("*")
@@ -147,19 +158,78 @@ export class SubscriptionService {
    * Check if a user has an active subscription
    */
   public async hasActiveSubscription(userId: string): Promise<boolean> {
-    const { data: subscription } = await supabase
-      .from("subscriptions")
-      .select("status")
-      .eq("user_id", userId)
-      .single();
+    console.log('Checking active subscription for user:', userId);
+    
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      return false;
+    }
 
-    return subscription?.status === "active";
+    try {
+      console.log('Fetching subscription data...');
+      const { data: subscription, error } = await supabase
+        .from("subscriptions")
+        .select("status, plan")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // Record not found
+          console.log('Creating default subscription for new user');
+          const defaultSubscription = {
+            user_id: userId,
+            status: 'active',
+            plan: 'basic',
+            subscription_id: `default-${userId}`,
+            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          };
+
+          const { error: insertError } = await supabase
+            .from("subscriptions")
+            .insert(defaultSubscription);
+
+          if (insertError) {
+            console.error('Error creating default subscription:', insertError);
+            return false;
+          }
+
+          return false; // New users start with basic (unpaid) plan
+        }
+        console.error('Error fetching subscription:', error);
+        return false;
+      }
+
+      // Check if subscription exists and is active with a paid plan
+      const hasPaidAccess = subscription?.status === "active" &&
+        (subscription.plan === "early_adopter" ||
+          subscription.plan === "support" ||
+          subscription.plan === "paid");
+
+      console.log('Subscription status:', {
+        exists: !!subscription,
+        status: subscription?.status,
+        plan: subscription?.plan,
+        hasPaidAccess
+      });
+
+      return hasPaidAccess;
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      return false;
+    }
   }
 
   /**
    * Get a user's current subscription tier
    */
   public async getCurrentTier(userId: string): Promise<SubscriptionTier> {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      return "basic";
+    }
+
     const { data: subscription } = await supabase
       .from("subscriptions")
       .select("status, plan")
@@ -177,6 +247,12 @@ export class SubscriptionService {
   public async cancelSubscription(userId: string): Promise<boolean> {
     const subscription = await this.getSubscription(userId);
     if (!subscription?.subscription_id) {
+      return false;
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.error("Supabase client not initialized");
       return false;
     }
 
@@ -222,115 +298,77 @@ export class SubscriptionService {
    * Get subscription features for a user
    */
   public async getFeatures(userId: string): Promise<string[]> {
-    const subscription = await this.getSubscription(userId);
-    if (!subscription) {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.error("Supabase client not initialized");
       return SUBSCRIPTION_TIERS.basic.feature_flags;
     }
 
-    return SUBSCRIPTION_TIERS[subscription.plan].feature_flags;
+    try {
+      const { data: subscription, error } = await supabase
+        .from("subscriptions")
+        .select("status, plan")
+        .eq("user_id", userId)
+        .single();
+
+      // If no subscription or error, return basic features
+      if (error || !subscription) {
+        return SUBSCRIPTION_TIERS.basic.feature_flags;
+      }
+
+      // User has access if they have a paid plan or lifetime subscription
+      const hasPaidAccess =
+        subscription.status === "active" &&
+        (subscription.plan === "paid" || subscription.plan === "lifetime");
+
+      if (hasPaidAccess) {
+        return [...SUBSCRIPTION_TIERS.basic.feature_flags, "cloud_storage"];
+      }
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+    }
+
+    return SUBSCRIPTION_TIERS.basic.feature_flags;
   }
 
   /**
    * Check if a user has access to a specific feature
    */
   public async hasFeature(
-    userId: string,
-    featureKey: string
+    userId: string
   ): Promise<boolean> {
-    const features = await this.getFeatures(userId);
-    return features.includes(featureKey);
-  }
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      return false;
+    }
 
-  /**
-   * Create a checkout session for a subscription
-   */
-  public async createCheckoutSession(
-  storeId: string | number,
-  variantId: string | number,
-  checkoutOptions: NewCheckout
-): Promise<Checkout | null> {
-  try {
-    const formattedStoreId = storeId.toString();
-    const formattedVariantId = variantId.toString();
-
-    const requestBody = {
-      data: {
-        type: "checkouts",
-        attributes: {
-          product_options: {
-            name: "Clippia Subscription",
-            description: "Subscribe to Clippia"
-          },
-          checkout_options: {
-            embed: true,
-            media: true,
-            logo: true,
-            desc: true,
-            discount: true,
-            subscription_preview: true
-          },
-          checkout_data: {
-            email: checkoutOptions.checkoutData?.email || "",
-            custom: {
-              user_id: checkoutOptions.checkoutData?.custom?.user_id || ""
-            }
-          },
-          expires_at: null,
-          preview: false,
-          test_mode: false
-        },
-        relationships: {
-          store: {
-            data: {
-              type: "stores",
-              id: formattedStoreId
-            }
-          },
-          variant: {
-            data: {
-              type: "variants",
-              id: formattedVariantId
-            }
-          }
-        }
-      }
-    };
-
-    console.log('Full Lemon Squeezy request:', JSON.stringify(requestBody, null, 2));
-
-    const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.api+json",
-        "Content-Type": "application/vnd.api+json",
-        Authorization: `Bearer ${LEMON_SQUEEZY_CONFIG.apiKey}`
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    // Get response body regardless of status
-    const responseText = await response.text();
-    let responseData;
     try {
-      responseData = JSON.parse(responseText);
-    } catch {
-      console.error("Failed to parse response as JSON:", responseText);
-      throw new Error("Invalid JSON response from Lemon Squeezy");
-    }
+      // Check subscription status directly
+      const { data: subscription, error } = await supabase
+        .from("subscriptions")
+        .select("status, plan")
+        .eq("user_id", userId)
+        .single();
 
-    if (!response.ok) {
-      console.error('Lemon Squeezy API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: responseData
-      });
-      throw new Error(responseData?.errors?.[0]?.detail || 'Unknown Lemon Squeezy API error');
-    }
+      // If no subscription or error, user doesn't have access
+      if (error || !subscription) {
+        console.log("No subscription found or error:", error);
+        return false;
+      }
 
-    return responseData;
-  } catch (error) {
-    console.error('Checkout creation error:', error);
-    throw error;
+      console.log("Subscription data:", subscription);
+
+      // User has access if they have a paid plan or lifetime subscription
+      const hasPaidAccess =
+        subscription.status === "active" &&
+        (subscription.plan === "paid" || subscription.plan === "lifetime");
+
+      console.log("Has paid access:", hasPaidAccess);
+      return hasPaidAccess;
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      return false;
     }
   }
 }
@@ -340,7 +378,9 @@ export const getSubscriptionTiers = () => {
 };
 
 export const getSubscriptionTier = (id: string) => {
-  return id in SUBSCRIPTION_TIERS ? SUBSCRIPTION_TIERS[id as keyof typeof SUBSCRIPTION_TIERS] : null;
+  return id in SUBSCRIPTION_TIERS
+    ? SUBSCRIPTION_TIERS[id as keyof typeof SUBSCRIPTION_TIERS]
+    : null;
 };
 
 // export const getSubscriptionVariantId = (id: string) => {

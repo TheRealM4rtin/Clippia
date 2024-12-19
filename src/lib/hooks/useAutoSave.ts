@@ -53,8 +53,9 @@ export function useAutoSave({
 
   // Save on unmount if needed
   useEffect(() => {
+    const previousContent = previousContentRef.current;
     return () => {
-      const hasUnsavedChanges = content !== previousContentRef.current;
+      const hasUnsavedChanges = content !== previousContent;
       if (enabled && hasUnsavedChanges && !savingRef.current) {
         onSave(content);
       }

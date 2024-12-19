@@ -1,76 +1,112 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { createClient } from '@/lib/utils/supabase/client';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { User, Session, SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '@/lib/supabase';
+import type { Database } from '@/types/database.types';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   refreshAuth: () => Promise<void>;
+  supabase: SupabaseClient<Database> | null;
 }
 
+// Initial context value without Supabase client
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  refreshAuth: async () => {}
+  refreshAuth: async () => {},
+  supabase: null,
 });
 
-const supabase = createClient();
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [supabase, setSupabase] = useState<SupabaseClient<Database> | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
-  const refreshAuth = async () => {
+  // Initialize Supabase client on mount (client-side only)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    const client = getSupabaseClient();
+    if (client) {
+      setSupabase(client);
+      // Immediately check session when client is set
+      refreshAuth();
+    }
+  }, [isClient, refreshAuth]);
+
+  const refreshAuth = useCallback(async () => {
+    if (!supabase) return;
+
     try {
-      setLoading(true);
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      console.log('Refreshing auth state...');
+      const { data: { session: newSession }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Auth refresh error:', error);
-        return;
+        console.error('Error getting session:', error);
+        throw error;
       }
 
-      if (currentSession) {
-        setSession(currentSession);
-        setUser(currentSession.user);
+      console.log('Auth refresh result:', {
+        hasSession: !!newSession,
+        userId: newSession?.user?.id
+      });
+
+      if (newSession) {
+        // Update both session and user state
+        setSession(newSession);
+        setUser(newSession.user);
+        
+        // Update Supabase client session
+        await supabase.auth.setSession({
+          access_token: newSession.access_token,
+          refresh_token: newSession.refresh_token,
+        });
       } else {
+        console.log('No active session found');
         setSession(null);
         setUser(null);
       }
-    } catch (err) {
-      console.error('Auth refresh failed:', err);
+    } catch (error) {
+      console.error('Error refreshing auth:', error);
+      setSession(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
+  // Set up auth state listener after client is initialized
   useEffect(() => {
-    // Initial auth check
-    refreshAuth();
+    if (!supabase) return;
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('Auth state changed:', event, newSession?.user?.id);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('Auth state changed:', { event, userId: newSession?.user?.id });
       
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setSession(null);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (newSession) {
-          setUser(newSession.user);
-          setSession(newSession);
-        } else {
-          // If we get a sign in event but no session, refresh auth state
-          await refreshAuth();
-        }
+      if (newSession) {
+        setSession(newSession);
+        setUser(newSession.user);
+        
+        // Ensure session is properly set in Supabase client
+        await supabase.auth.setSession({
+          access_token: newSession.access_token,
+          refresh_token: newSession.refresh_token,
+        });
       } else {
-        // For all other events, refresh the auth state
-        await refreshAuth();
+        setSession(null);
+        setUser(null);
       }
       
       setLoading(false);
@@ -79,13 +115,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
+
+  const value = {
+    user,
+    session,
+    loading,
+    refreshAuth,
+    supabase,
+  };
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return <>{children}</>;
+  }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, refreshAuth }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

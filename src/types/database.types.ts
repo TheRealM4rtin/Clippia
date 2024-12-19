@@ -195,6 +195,36 @@ export type Database = {
         }
         Relationships: []
       }
+      whiteboards: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -213,6 +243,14 @@ export type Database = {
           target_user_id: string
         }
         Returns: boolean
+      }
+      create_checkout_attempt: {
+        Args: {
+          p_user_id: string
+          p_user_email: string
+          p_variant_id: string
+        }
+        Returns: Json
       }
       get_account_invitations: {
         Args: {
@@ -262,6 +300,33 @@ export type Database = {
       get_upper_system_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      handle_order_created: {
+        Args: {
+          p_user_id: string
+          p_order_id: string
+          p_subscription_id?: string
+        }
+        Returns: Json
+      }
+      handle_subscription_event: {
+        Args: {
+          p_user_id: string
+          p_subscription_id: string
+          p_event_name: string
+          p_variant_id: string
+          p_ends_at: string
+          p_checkout_id?: string
+        }
+        Returns: Json
+      }
+      handle_webhook_event: {
+        Args: {
+          p_event_type: string
+          p_payload: Json
+          p_user_id: string
+        }
+        Returns: Json
       }
       has_active_subscription: {
         Args: {
@@ -397,6 +462,7 @@ export type Database = {
       payment_status: "pending" | "succeeded" | "failed"
       storage_location: "postgres" | "s3"
       subscription_item_type: "flat" | "per_seat" | "metered"
+      subscription_plan: "basic" | "pro" | "support"
       subscription_status:
         | "active"
         | "trialing"
@@ -409,6 +475,12 @@ export type Database = {
       subscription_tier: "basic" | "early_adopter" | "support"
     }
     CompositeTypes: {
+      checkout_attempt_result: {
+        success: boolean | null
+        message: string | null
+        checkout_url: string | null
+        attempt_id: string | null
+      }
       invitation: {
         email: string | null
         role: string | null
