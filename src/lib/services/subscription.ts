@@ -227,7 +227,7 @@ export class SubscriptionService {
       return SUBSCRIPTION_TIERS.basic.feature_flags;
     }
 
-    return SUBSCRIPTION_TIERS[subscription.plan].feature_flags;
+    return SUBSCRIPTION_TIERS[subscription.plan as keyof typeof SUBSCRIPTION_TIERS].feature_flags;
   }
 
   /**
