@@ -16,6 +16,12 @@ Clippia brings back the nostalgic Windows 98 aesthetic while providing a modern 
 - 🌈 Customizable background colors
 - 🍋 Lemonsqueezy integration (3 plans available)
 
+## Demo
+
+![Clippia Demo](public/1.png)
+
+![Clippia Demo](public/2.png)
+
 ## 🚀 Getting Started
 
 Install dependencies
