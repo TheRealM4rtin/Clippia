@@ -11,7 +11,7 @@ lemonSqueezySetup({
 });
 
 export const LEMON_SQUEEZY_CONFIG = {
-  apiKey: process.env.LEMON_SQUEEZY_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_LEMON_SQUEEZY_API_KEY,
   webhookSecret: process.env.LEMON_SQUEEZY_WEBHOOK_SECRET,
   storeId: process.env.NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID,
   baseUrl: process.env.NEXT_PUBLIC_APP_URL,

@@ -2,12 +2,30 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { LEMON_SQUEEZY_CONFIG } from "@/config/lemon-squeezy";
 import { verifyWebhookSignature } from "@/lib/lemon-squeezy";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   console.log("🔔 Webhook received");
 
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      console.error("❌ Failed to initialize admin client");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    // Check if webhook secret is configured
+    if (!LEMON_SQUEEZY_CONFIG?.webhookSecret) {
+      console.error("❌ Webhook secret not configured");
+      return NextResponse.json(
+        { error: "Webhook not configured" },
+        { status: 501 }
+      );
+    }
+
     const body = await request.text();
     const headersList = headers();
     const signature = headersList.get("x-signature");
@@ -19,8 +37,8 @@ export async function POST(request: Request) {
     console.log("📦 Webhook body:", body);
 
     // Verify signature
-    if (!signature || !LEMON_SQUEEZY_CONFIG.webhookSecret) {
-      console.error("❌ Signature verification failed");
+    if (!signature) {
+      console.error("❌ Missing signature");
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 

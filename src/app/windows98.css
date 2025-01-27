@@ -1,4 +1,4 @@
-@font-face {
+/* @font-face {
   font-family: 'MS Sans Serif';
   src: url('/fonts/MS-Sans-Serif.woff2') format('woff2'),
        url('/fonts/MS-Sans-Serif.woff') format('woff');
@@ -15,7 +15,7 @@
        url('/fonts/LeviWindows.woff') format('woff');
   font-weight: normal;
   font-style: normal;
-}
+} */
 
 .windows98-window {
   background-color: #c0c0c0;

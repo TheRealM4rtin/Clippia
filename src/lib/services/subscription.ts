@@ -11,7 +11,7 @@ import {
 export class SubscriptionService {
   private static instance: SubscriptionService;
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): SubscriptionService {
     if (!SubscriptionService.instance) {
@@ -154,68 +154,64 @@ export class SubscriptionService {
     return data as Subscription;
   }
 
+  // Define valid plans as a class property
+  private validPlans = [
+    "early_adopter",
+    "support",
+    "paid",
+    "basic",
+    "lifetime",
+  ];
+
   /**
    * Check if a user has an active subscription
    */
   public async hasActiveSubscription(userId: string): Promise<boolean> {
-    console.log('Checking active subscription for user:', userId);
-    
+    console.log("🔍 Starting subscription check for user:", userId);
+
     const supabase = getSupabaseClient();
     if (!supabase) {
-      console.error("Supabase client not initialized");
+      console.error("❌ Supabase client not initialized");
       return false;
     }
 
     try {
-      console.log('Fetching subscription data...');
+      console.log("📡 Fetching subscription data from database...");
       const { data: subscription, error } = await supabase
         .from("subscriptions")
-        .select("status, plan")
+        .select("*")
         .eq("user_id", userId)
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') { // Record not found
-          console.log('Creating default subscription for new user');
-          const defaultSubscription = {
-            user_id: userId,
-            status: 'active',
-            plan: 'basic',
-            subscription_id: `default-${userId}`,
-            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          };
-
-          const { error: insertError } = await supabase
-            .from("subscriptions")
-            .insert(defaultSubscription);
-
-          if (insertError) {
-            console.error('Error creating default subscription:', insertError);
-            return false;
-          }
-
-          return false; // New users start with basic (unpaid) plan
-        }
-        console.error('Error fetching subscription:', error);
+        console.error("❌ Database error:", error);
         return false;
       }
 
-      // Check if subscription exists and is active with a paid plan
-      const hasPaidAccess = subscription?.status === "active" &&
-        (subscription.plan === "early_adopter" ||
-          subscription.plan === "support" ||
-          subscription.plan === "paid");
+      if (!subscription) {
+        console.log("⚠️ No subscription found");
+        return false;
+      }
 
-      console.log('Subscription status:', {
-        exists: !!subscription,
-        status: subscription?.status,
-        plan: subscription?.plan,
-        hasPaidAccess
+      console.log("📋 Raw subscription data:", subscription);
+      console.log("✓ Valid plans:", this.validPlans);
+
+      const hasPaidAccess =
+        subscription.status === "active" &&
+        this.validPlans.includes(subscription.plan);
+
+      console.log("🔑 Access check results:", {
+        exists: true,
+        status: subscription.status,
+        plan: subscription.plan,
+        isStatusActive: subscription.status === "active",
+        isPlanValid: this.validPlans.includes(subscription.plan),
+        finalDecision: hasPaidAccess,
       });
 
       return hasPaidAccess;
     } catch (error) {
-      console.error("Error checking subscription:", error);
+      console.error("❌ Error in subscription check:", error);
       return false;
     }
   }
@@ -307,7 +303,7 @@ export class SubscriptionService {
     try {
       const { data: subscription, error } = await supabase
         .from("subscriptions")
-        .select("status, plan")
+        .select("*")
         .eq("user_id", userId)
         .single();
 
@@ -316,10 +312,9 @@ export class SubscriptionService {
         return SUBSCRIPTION_TIERS.basic.feature_flags;
       }
 
-      // User has access if they have a paid plan or lifetime subscription
       const hasPaidAccess =
         subscription.status === "active" &&
-        (subscription.plan === "paid" || subscription.plan === "lifetime");
+        this.validPlans.includes(subscription.plan);
 
       if (hasPaidAccess) {
         return [...SUBSCRIPTION_TIERS.basic.feature_flags, "cloud_storage"];
@@ -334,9 +329,7 @@ export class SubscriptionService {
   /**
    * Check if a user has access to a specific feature
    */
-  public async hasFeature(
-    userId: string
-  ): Promise<boolean> {
+  public async hasFeature(userId: string): Promise<boolean> {
     const supabase = getSupabaseClient();
     if (!supabase) {
       console.error("Supabase client not initialized");
@@ -344,14 +337,12 @@ export class SubscriptionService {
     }
 
     try {
-      // Check subscription status directly
       const { data: subscription, error } = await supabase
         .from("subscriptions")
-        .select("status, plan")
+        .select("*")
         .eq("user_id", userId)
         .single();
 
-      // If no subscription or error, user doesn't have access
       if (error || !subscription) {
         console.log("No subscription found or error:", error);
         return false;
@@ -359,10 +350,9 @@ export class SubscriptionService {
 
       console.log("Subscription data:", subscription);
 
-      // User has access if they have a paid plan or lifetime subscription
       const hasPaidAccess =
         subscription.status === "active" &&
-        (subscription.plan === "paid" || subscription.plan === "lifetime");
+        this.validPlans.includes(subscription.plan);
 
       console.log("Has paid access:", hasPaidAccess);
       return hasPaidAccess;
@@ -390,3 +380,48 @@ export const getSubscriptionTier = (id: string) => {
 
 // Export a singleton instance
 export const subscriptionService = SubscriptionService.getInstance();
+
+// Add this to subscription.ts
+
+export const debugSubscriptionState = async (userId: string) => {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    console.error("❌ No Supabase client available");
+    return;
+  }
+
+  try {
+    console.log('🔍 Running subscription debug for user:', userId);
+
+    // Check raw subscription data
+    const { data: subscription, error } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (error) {
+      console.error('❌ Error fetching subscription:', error);
+      return;
+    }
+
+    // Validate subscription state
+    const validPlans = ["early_adopter", "support", "paid", "basic", "lifetime"];
+    const hasPaidAccess = subscription?.status === "active" && 
+                         validPlans.includes(subscription.plan);
+
+    console.log('📊 Subscription Debug Results:', {
+      rawData: subscription,
+      status: subscription?.status,
+      plan: subscription?.plan,
+      isActive: subscription?.status === "active",
+      isPlanValid: validPlans.includes(subscription?.plan || ''),
+      hasPaidAccess,
+      validPlans
+    });
+
+  } catch (error) {
+    console.error("❌ Debug error:", error);
+  }
+};
+  

@@ -1,7 +1,12 @@
 import { StateCreator } from "zustand";
 import { AppState } from "@/types/store/state";
 import { FlowActions } from "@/types/store/actions";
-import { applyNodeChanges, applyEdgeChanges, NodeChange } from "@xyflow/react";
+import {
+  applyNodeChanges,
+  applyEdgeChanges,
+  NodeChange,
+  Viewport,
+} from "@xyflow/react";
 
 export const createFlowSlice: StateCreator<AppState, [], [], FlowActions> = (
   set
@@ -26,7 +31,11 @@ export const createFlowSlice: StateCreator<AppState, [], [], FlowActions> = (
           const dimensionChange = dimensionChanges.find(
             (change) => change.id === window.id
           );
-          if (dimensionChange && "dimensions" in dimensionChange && dimensionChange.dimensions) {
+          if (
+            dimensionChange &&
+            "dimensions" in dimensionChange &&
+            dimensionChange.dimensions
+          ) {
             return {
               ...window,
               size: {
@@ -93,11 +102,13 @@ export const createFlowSlice: StateCreator<AppState, [], [], FlowActions> = (
       },
     }));
   },
-  setViewport: (viewport) => {
+  setViewport: (viewport: Viewport) => {
     set((state) => ({
       flow: {
         ...state.flow,
         viewport,
+        position: { x: viewport.x, y: viewport.y },
+        scale: viewport.zoom,
       },
     }));
   },

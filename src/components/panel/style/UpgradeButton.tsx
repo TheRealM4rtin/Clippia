@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/utils/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { AuthUser } from '@/types/auth';
 
 interface Subscription {
     id: string;
@@ -14,7 +14,7 @@ interface Subscription {
 }
 
 interface UpgradeButtonProps {
-    user: User | null;
+    user: AuthUser | null;
     isLoading: boolean;
     onClick: () => void;
 }

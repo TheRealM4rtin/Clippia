@@ -1,4 +1,7 @@
 import React, { memo, useCallback, useState, useEffect } from 'react';
+import { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
+import { AuthUser } from '@/types/auth';
 import ButtonPanel from '@/components/ui/ButtonPanel';
 import { Mail } from '@react95/icons';
 import styles from './Panel.module.css';
@@ -13,19 +16,22 @@ import { subscriptionService } from '@/lib/services/subscription';
 
 declare global {
   interface Window {
+
     selectPlan?: (variantId: string) => void;
   }
 }
 
-const supabase = createClient();
+const supabase = createClient() as SupabaseClient<Database>;
 const WINDOW_SPACING = 30;
 
 const Panel: React.FC = memo(() => {
   const panelWidth = 250;
   const [isLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, loading, session, refreshAuth } = useAuth();
-  const [hasPaidPlan, setHasPaidPlan] = useState(false);
+  const { user, loading, session, hasPaidPlan: authHasPaidPlan } = useAuth();
+  const typedUser = user as AuthUser | null;
+  const [hasPaidPlanState, setHasPaidPlan] = useState(false);
+
 
   const {
     flow: { nodes },
@@ -39,43 +45,41 @@ const Panel: React.FC = memo(() => {
 
   const { fitView, getViewport } = useReactFlow();
 
-  // Debug effect to log auth state changes
-  useEffect(() => {
-    console.log('Auth state changed:', { 
-      user: user?.id, 
-      email: user?.email,
-      sessionExists: !!session,
-      hasPaidPlan,
-      loading 
-    });
-  }, [user, session, hasPaidPlan, loading]);
-
   // Add useEffect to check auth and session
   useEffect(() => {
+    console.log('Panel auth state:', {
+      user: user?.id,
+      email: user?.email,
+      sessionExists: !!session,
+      hasPaidPlan: hasPaidPlanState,
+      loading
+    });
+
     const checkAuth = async () => {
-      if (!user && !loading) {
+      if (!typedUser && !loading) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const sessionUser = currentSession?.user as AuthUser;
+
         console.log('Current session check:', {
           sessionExists: !!currentSession,
-          sessionUser: currentSession?.user?.id,
-          contextUser: user?.id
+          sessionUser: sessionUser?.id || null,
+          contextUser: user?.id || null,
+          hasPaidPlan: hasPaidPlanState
         });
 
-        if (currentSession?.user) {
+        if (sessionUser) {
           console.log('Session exists but no user in context, refreshing...');
           await supabase.auth.refreshSession();
-          // Force refresh the auth context
-          await refreshAuth();
         }
       }
     };
     checkAuth();
-  }, [user, loading, refreshAuth]);
+  }, [user, loading, session, hasPaidPlanState]);
 
   // Add useEffect to check subscription status
   useEffect(() => {
     let mounted = true;
-    
+
     const checkSubscription = async () => {
       if (user?.id) {
         console.log('Checking subscription for user:', user.id);
@@ -83,6 +87,8 @@ const Panel: React.FC = memo(() => {
         console.log('Subscription check result:', { hasSubscription });
         if (mounted) {
           setHasPaidPlan(hasSubscription);
+        } else {
+          setHasPaidPlan(false);
         }
       } else {
         console.log('No user ID available, setting hasPaidPlan to false');
@@ -93,7 +99,7 @@ const Panel: React.FC = memo(() => {
     };
 
     checkSubscription();
-    
+
     return () => {
       mounted = false;
     };
@@ -103,7 +109,7 @@ const Panel: React.FC = memo(() => {
     console.log('Show plans clicked:', {
       userExists: !!user,
       sessionExists: !!session,
-      hasPaidPlan
+      hasPaidPlan: hasPaidPlanState
     });
 
     if (!user || !session) {
@@ -154,7 +160,7 @@ const Panel: React.FC = memo(() => {
         }
       }]);
     }
-  }, [windows, removeWindow, onNodesChange, addWindow, getViewport, session, user, hasPaidPlan]);
+  }, [windows, removeWindow, onNodesChange, addWindow, getViewport, session, user, hasPaidPlanState]);
 
   const handleAddWindow = useCallback(() => {
     const existingWindows = nodes.filter(n => n.type === 'text');
@@ -282,7 +288,7 @@ const Panel: React.FC = memo(() => {
           <ButtonPanel.Button onClick={handleFitView}>
             Fit View
           </ButtonPanel.Button>
-          {!hasPaidPlan && (
+          {!hasPaidPlanState && (
             <UpgradeButton
               user={user}
               isLoading={isLoading}

@@ -1,6 +1,6 @@
-import { Node, Edge, NodeChange, EdgeChange, Connection } from '@xyflow/react';
-import { User } from '@supabase/supabase-js';
-import { WindowData, Position, Size } from '@/types/window';
+import { Node, Edge, NodeChange, EdgeChange, Connection } from "@xyflow/react";
+import { AuthUser } from "@/types/auth";
+import { WindowData, Position, Size } from "@/types/window";
 
 export interface ViewportState {
   x: number;
@@ -22,13 +22,13 @@ export interface AppState {
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
-  
+
   // Window State
   windows: WindowData[];
   addWindow: (window: Partial<WindowData>) => void;
   updateWindow: (id: string, updates: Partial<WindowData>) => void;
   removeWindow: (id: string) => void;
-  
+
   // View State
   colorBackground: boolean;
   toggleColorBackground: () => void;
@@ -42,14 +42,14 @@ export interface AppState {
   scale: number;
   setPosition: (position: Position) => void;
   setScale: (scale: number) => void;
-  
+
   // User State
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: AuthUser | null;
+  setUser: (user: AuthUser | null) => void;
   backgroundColor: string;
   setBackgroundColor: (color: string) => void;
-  
+
   // Assistant State
   assistantState: AssistantState;
   updateAssistantState: (updates: Partial<AssistantState>) => void;
-} 
+}

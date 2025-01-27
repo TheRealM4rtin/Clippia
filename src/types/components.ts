@@ -1,6 +1,6 @@
-import { NodeProps, Position } from '@xyflow/react';
-import { WindowType, Position as WindowPosition, Size } from './window';
-import { WhiteboardNodeProps, WhiteboardNodeData } from './whiteboard';
+import { NodeProps, Position } from "@xyflow/react";
+import { WindowType, Position as WindowPosition, Size } from "./window";
+import { WhiteboardNodeProps, WhiteboardNodeData } from "./whiteboard";
 
 // Base props that all window components share
 export interface BaseWindowComponentProps extends NodeProps {
@@ -11,8 +11,8 @@ export interface BaseWindowComponentProps extends NodeProps {
   isConnectable: boolean;
   positionAbsoluteX: number;
   positionAbsoluteY: number;
-  width?: number | null;
-  height?: number | null;
+  width?: number;
+  height?: number;
   selected: boolean;
   dragHandle?: string;
   selectable: boolean;
@@ -22,10 +22,11 @@ export interface BaseWindowComponentProps extends NodeProps {
 }
 
 // Props specifically for MyComputer component
-export interface MyComputerProps extends Omit<WhiteboardNodeProps, 'type' | 'data'> {
-  type: 'myComputer';
+export interface MyComputerProps
+  extends Omit<WhiteboardNodeProps, "type" | "data"> {
+  type: "myComputer";
   data: WhiteboardNodeData & {
-    windowType: 'myComputer';
+    windowType: "myComputer";
     position: WindowPosition;
     size?: Size;
     dragging: boolean;
@@ -36,6 +37,8 @@ export interface MyComputerProps extends Omit<WhiteboardNodeProps, 'type' | 'dat
 }
 
 // Type guard to check if props are MyComputerProps
-export function isMyComputerProps(props: WhiteboardNodeProps): props is MyComputerProps {
-  return props.data.windowType === 'myComputer' && props.type === 'myComputer';
-} 
+export function isMyComputerProps(
+  props: WhiteboardNodeProps
+): props is MyComputerProps {
+  return props.data.windowType === "myComputer" && props.type === "myComputer";
+}

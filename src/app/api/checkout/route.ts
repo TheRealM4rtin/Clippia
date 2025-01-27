@@ -1,7 +1,7 @@
 // /app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/utils/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { createCheckoutSession } from "@/lib/lemon-squeezy";
 
 const storeId = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID;
@@ -13,9 +13,17 @@ if (!storeId) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession();
+    const supabaseAdmin = getSupabaseAdmin();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
     }
 
     const body = await request.json();

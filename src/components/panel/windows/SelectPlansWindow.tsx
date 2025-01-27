@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import commonStyles from '../style/common.module.css';
 import { PlansWindowProps } from '@/types/window';
@@ -32,6 +32,20 @@ export const SelectPlansWindow: React.FC<PlansWindowProps> = (props) => {
   const { updateWindow, removeWindow, windows: { windows } } = useAppStore();
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [isComponentLoading, setIsComponentLoading] = useState(false);
+
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_LEMON_SQUEEZY_BASIC_VARIANT_ID) {
+      onError('Missing configuration for subscription plans');
+    }
+  }, [onError]);
+
+  useEffect(() => {
+    return () => {
+      setIsLoading(null);
+      setIsComponentLoading(false);
+    };
+  }, []);
 
   const handleClick = () => {
     const highestZIndex = Math.max(...windows.map(w => w.zIndex || 0)) + 1;
@@ -57,7 +71,7 @@ export const SelectPlansWindow: React.FC<PlansWindowProps> = (props) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: user.id,
           userEmail: user.email,
           variantId: variantId.toString()
@@ -65,7 +79,7 @@ export const SelectPlansWindow: React.FC<PlansWindowProps> = (props) => {
       });
 
       const responseData = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to create checkout session');
       }
@@ -82,8 +96,8 @@ export const SelectPlansWindow: React.FC<PlansWindowProps> = (props) => {
   };
 
   return (
-    <div 
-      ref={nodeRef} 
+    <div
+      ref={nodeRef}
       className={commonStyles.window}
       onClick={handleClick}
       style={{ zIndex: zIndex as number }}
@@ -104,7 +118,7 @@ export const SelectPlansWindow: React.FC<PlansWindowProps> = (props) => {
                 <li key={i}>{feature}</li>
               ))}
             </ul>
-            <button 
+            <button
               className="button"
               onClick={() => handleSelectPlan(plan.variantId!)}
               disabled={isLoading === plan.variantId}

@@ -4,24 +4,34 @@ import { Session } from "@supabase/supabase-js";
 import { AuthUser } from "@/types/auth";
 
 export interface WhiteboardNodeData extends WindowData {
-  session?: Session;
-  user?: AuthUser;
-  onError?: (error: string) => void;
+  id: string;
+  title: string;
+  zIndex: number;
+  content?: string;
+  position: { x: number; y: number };
+  windowType: WindowType;
+  isMinimized?: boolean;
+  isMaximized?: boolean;
+  size?: { width: number; height: number };
+  imageUrl?: string;
+  imageData?: string;
+  textContent?: string;
   [key: string]: unknown;
 }
 
-export interface WhiteboardNode extends Node<WhiteboardNodeData> {
+export interface WhiteboardNode {
+  id: string;
   type: WindowType;
-  width?: number;
-  height?: number;
+  position: { x: number; y: number };
+  data: WhiteboardNodeData;
+  draggable?: boolean;
+  selectable?: boolean;
 }
 
-export type WhiteboardNodeProps = NodeProps & {
+export interface WhiteboardNodeProps extends Omit<NodeProps, "data"> {
   data: WhiteboardNodeData;
   type: WindowType;
-  width?: number;
-  height?: number;
-};
+}
 
 export interface WhiteboardState {
   id: string;
@@ -33,15 +43,20 @@ export interface WhiteboardState {
   version: number;
   created_at: string;
   updated_at: string;
+  ui?: {
+    colorBackground?: boolean;
+    backgroundColor?: string;
+    lastModified?: string;
+  };
 }
 
 export interface SaveError {
   message: string;
   retryable: boolean;
   data: {
+    [key: string]: unknown;
     type?: string;
     suppressPrompt?: boolean;
-    [key: string]: unknown;
   } | null;
 }
 
@@ -49,4 +64,18 @@ export interface SaveQueueItem {
   state: WhiteboardState;
   retryCount: number;
   lastAttempt?: Date;
+}
+
+export interface CompressedWhiteboardState {
+  id: string;
+  user_id: string;
+  name: string;
+  data: string;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  nodes?: WhiteboardNode[];
+  edges?: Edge[];
+  viewport?: Viewport;
+  [key: string]: unknown;
 }
